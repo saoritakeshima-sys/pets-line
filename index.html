@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PETS LINE — ペットシッター検索・依頼</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+  :root {
+    --pink: #D4537E;
+    --pink-dark: #993556;
+    --pink-light: #FBEAF0;
+    --pink-mid: #F4C0D1;
+    --text: #1a1a1a;
+    --text-mid: #555;
+    --text-muted: #888;
+    --border: #e8e8e8;
+    --bg: #f7f7f5;
+    --white: #fff;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 2px 12px rgba(0,0,0,.07);
+    --shadow-hover: 0 6px 24px rgba(0,0,0,.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ─── HEADER ─── */
+  .header {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo { font-size: 20px; font-weight: 700; color: var(--pink); letter-spacing: .02em; }
+  .logo span { font-size: 11px; font-weight: 400; color: var(--text-muted); margin-left: 8px; letter-spacing: 0; }
+  .header-links { display: flex; gap: 8px; }
+  .header-links button {
+    padding: 7px 16px; font-size: 12px; border-radius: 20px;
+    cursor: pointer; font-family: inherit;
+  }
+  .btn-ghost { background: none; border: 1px solid var(--border); color: var(--text-mid); }
+  .btn-ghost:hover { border-color: var(--pink); color: var(--pink); }
+  .btn-solid { background: var(--pink); border: none; color: white; font-weight: 500; }
+  .btn-solid:hover { background: var(--pink-dark); }
+
+  /* ─── HERO / SEARCH ─── */
+  .hero {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 28px 32px 24px;
+  }
+  .hero h1 { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .hero p { font-size: 13px; color: var(--text-muted); margin-bottom: 18px; }
+  .search-row {
+    display: flex; gap: 10px; align-items: center;
+    background: var(--bg); border: 1.5px solid var(--border);
+    border-radius: var(--radius); padding: 8px 8px 8px 16px;
+    max-width: 680px;
+  }
+  .search-row:focus-within { border-color: var(--pink); }
+  .search-row input {
+    flex: 1; border: none; background: none; font-size: 14px;
+    color: var(--text); outline: none; font-family: inherit;
+  }
+  .search-row select {
+    border: none; background: none; font-size: 13px; color: var(--text-mid);
+    outline: none; cursor: pointer; font-family: inherit;
+    border-left: 1px solid var(--border); padding-left: 12px;
+  }
+  .search-row button {
+    padding: 9px 22px; background: var(--pink); color: white; border: none;
+    border-radius: var(--radius-sm); font-size: 13px; font-weight: 500;
+    cursor: pointer; font-family: inherit; white-space: nowrap;
+  }
+  .search-row button:hover { background: var(--pink-dark); }
+
+  /* ─── FILTER CHIPS ─── */
+  .filter-bar {
+    padding: 14px 32px; display: flex; gap: 8px; flex-wrap: wrap;
+    background: var(--white); border-bottom: 1px solid var(--border);
+  }
+  .fchip {
+    padding: 5px 14px; border-radius: 20px; font-size: 12px;
+    border: 1px solid var(--border); background: var(--white);
+    cursor: pointer; color: var(--text-mid); font-family: inherit;
+    transition: all .15s;
+  }
+  .fchip:hover, .fchip.on { background: var(--pink-light); border-color: var(--pink); color: var(--pink-dark); font-weight: 500; }
+
+  /* ─── LIST PAGE ─── */
+  .page { display: none; }
+  .page.on { display: block; }
+
+  .list-wrap { max-width: 1000px; margin: 0 auto; padding: 24px 32px; }
+  .list-meta { font-size: 12px; color: var(--text-muted); margin-bottom: 18px; }
+  .list-meta strong { color: var(--text); }
+
+  .sitter-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+
+  .sitter-card {
+    background: var(--white); border-radius: var(--radius);
+    border: 1px solid var(--border); overflow: hidden;
+    cursor: pointer; transition: box-shadow .2s, transform .2s, border-color .2s;
+  }
+  .sitter-card:hover {
+    box-shadow: var(--shadow-hover); transform: translateY(-3px); border-color: var(--pink-mid);
+  }
+
+  .sc-img {
+    height: 150px; display: flex; align-items: center;
+    justify-content: center; position: relative; font-size: 56px;
+  }
+  .sc-badge {
+    position: absolute; top: 10px; left: 10px;
+    font-size: 10px; padding: 3px 9px; border-radius: 20px; font-weight: 700;
+  }
+  .badge-top { background: var(--pink); color: white; }
+  .badge-new { background: #E1F5EE; color: #0F6E56; }
+  .sc-avail {
+    position: absolute; top: 10px; right: 10px;
+    font-size: 10px; padding: 3px 8px; border-radius: 20px;
+    background: rgba(255,255,255,.92); color: var(--text-muted);
+  }
+
+  .sc-body { padding: 14px 16px; }
+  .sc-name { font-size: 15px; font-weight: 700; color: var(--text); }
+  .sc-title { font-size: 11px; color: var(--text-muted); margin: 2px 0 10px; }
+  .sc-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
+  .sc-tag {
+    font-size: 10px; padding: 2px 8px; border-radius: 20px;
+    background: var(--bg); color: var(--text-muted); border: 1px solid var(--border);
+  }
+  .sc-tag-pink { background: var(--pink-light); color: var(--pink-dark); border-color: var(--pink-mid); }
+
+  .sc-footer {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 10px; border-top: 1px solid var(--border);
+  }
+  .sc-price { font-size: 16px; font-weight: 700; color: var(--pink); }
+  .sc-price small { font-size: 11px; font-weight: 400; color: var(--text-muted); }
+  .sc-stars { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 3px; }
+  .star { color: #F0997B; }
+
+  /* ─── DETAIL PAGE ─── */
+  .detail-wrap { max-width: 760px; margin: 0 auto; padding: 24px 32px; }
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; color: var(--text-muted); cursor: pointer;
+    background: none; border: none; font-family: inherit;
+    margin-bottom: 20px; padding: 6px 0;
+  }
+  .back-btn:hover { color: var(--pink); }
+
+  .detail-hero {
+    background: var(--white); border-radius: var(--radius);
+    border: 1px solid var(--border); overflow: hidden; margin-bottom: 16px;
+  }
+  .dh-top {
+    display: flex; gap: 20px; align-items: flex-start;
+    padding: 24px; border-bottom: 1px solid var(--border);
+  }
+  .dh-avatar {
+    width: 90px; height: 90px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 42px; flex-shrink: 0;
+  }
+  .dh-info { flex: 1; }
+  .dh-name { font-size: 22px; font-weight: 700; margin-bottom: 2px; }
+  .dh-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
+  .dh-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+  .dh-tag { font-size: 11px; padding: 3px 11px; border-radius: 20px; background: var(--pink-light); color: var(--pink-dark); border: 1px solid var(--pink-mid); }
+
+  .dh-stats { display: grid; grid-template-columns: repeat(3,1fr); padding: 0; }
+  .dh-stat {
+    padding: 16px; text-align: center;
+    border-right: 1px solid var(--border);
+  }
+  .dh-stat:last-child { border-right: none; }
+  .dh-stat-val { font-size: 20px; font-weight: 700; color: var(--text); }
+  .dh-stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  .dh-bio { padding: 18px 24px; font-size: 13px; color: var(--text-mid); line-height: 1.8; }
+
+  .detail-section {
+    background: var(--white); border-radius: var(--radius);
+    border: 1px solid var(--border); padding: 20px 24px; margin-bottom: 16px;
+  }
+  .sec-head {
+    font-size: 14px; font-weight: 700; color: var(--text);
+    margin-bottom: 14px; display: flex; align-items: center; gap: 6px;
+  }
+  .sec-head span { font-size: 16px; }
+
+  .price-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .price-table tr { border-bottom: 1px solid var(--border); }
+  .price-table tr:last-child { border-bottom: none; }
+  .price-table td { padding: 9px 4px; }
+  .price-table td:first-child { color: var(--text-mid); }
+  .price-table td:last-child { text-align: right; font-weight: 700; color: var(--text); }
+
+  .week-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 8px; }
+  .day-col { text-align: center; }
+  .day-name { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; }
+  .day-slot {
+    font-size: 12px; padding: 5px 2px; border-radius: var(--radius-sm);
+    font-weight: 700;
+  }
+  .ds-open { background: #E1F5EE; color: #0F6E56; }
+  .ds-busy { background: var(--bg); color: #ccc; }
+
+  /* ─── FORM ─── */
+  .form-card {
+    background: var(--white); border-radius: var(--radius);
+    border: 1px solid var(--border); padding: 24px; margin-bottom: 16px;
+  }
+  .form-head { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .form-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 20px; }
+
+  .step-progress { display: flex; gap: 0; margin-bottom: 24px; }
+  .step-item {
+    flex: 1; text-align: center; padding: 9px 4px;
+    font-size: 11px; color: var(--text-muted);
+    border-bottom: 2px solid var(--border);
+  }
+  .step-item.done { color: var(--pink); border-bottom-color: var(--pink); }
+  .step-item.active { color: var(--pink); border-bottom-color: var(--pink); font-weight: 700; }
+
+  .fl { margin-bottom: 16px; }
+  .fl label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 5px; font-weight: 500; }
+  .fl label .req { color: var(--pink); }
+  .fl input, .fl textarea, .fl select {
+    width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 10px 13px; font-size: 13px; color: var(--text);
+    background: var(--white); font-family: inherit; transition: border-color .15s;
+  }
+  .fl input:focus, .fl textarea:focus, .fl select:focus {
+    outline: none; border-color: var(--pink);
+  }
+  .fl textarea { resize: vertical; min-height: 72px; }
+
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .three { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+  .chip-group { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 5px; }
+  .chip {
+    padding: 6px 14px; font-size: 12px; border-radius: 20px;
+    border: 1px solid var(--border); background: var(--white);
+    color: var(--text-mid); cursor: pointer; font-family: inherit;
+    transition: all .15s;
+  }
+  .chip:hover { border-color: var(--pink-mid); }
+  .chip.on { background: var(--pink-light); border-color: var(--pink); color: var(--pink-dark); font-weight: 700; }
+
+  .btn-row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px; }
+  .form-btn {
+    padding: 10px 22px; font-size: 13px; border-radius: var(--radius-sm);
+    cursor: pointer; font-family: inherit; font-weight: 500;
+  }
+  .form-btn-back { background: none; border: 1px solid var(--border); color: var(--text-mid); }
+  .form-btn-back:hover { border-color: var(--text-mid); }
+  .form-btn-next { background: var(--pink); border: none; color: white; }
+  .form-btn-next:hover { background: var(--pink-dark); }
+
+  /* ─── AI CHECK BOX ─── */
+  .ai-box {
+    background: var(--pink-light); border: 1px solid var(--pink-mid);
+    border-radius: var(--radius-sm); padding: 14px 16px; margin: 14px 0;
+    font-size: 13px; color: #72243E; line-height: 1.7;
+  }
+  .ai-label {
+    font-size: 11px; font-weight: 700; color: var(--pink);
+    margin-bottom: 6px; display: flex; align-items: center; gap: 5px;
+  }
+  .spinner {
+    width: 12px; height: 12px; border: 2px solid var(--pink-mid);
+    border-top-color: var(--pink); border-radius: 50%;
+    animation: spin .8s linear infinite; display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .price-estimate {
+    background: var(--bg); border-radius: var(--radius-sm);
+    padding: 14px 18px; display: flex; justify-content: space-between;
+    align-items: center; margin: 12px 0;
+  }
+  .pe-label { font-size: 12px; color: var(--text-muted); }
+  .pe-value { font-size: 24px; font-weight: 700; color: var(--pink); }
+  .pe-note { font-size: 11px; color: var(--text-muted); }
+
+  .summary-rows { margin: 14px 0; }
+  .sum-row {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px;
+  }
+  .sum-row:last-child { border-bottom: none; }
+  .sum-label { color: var(--text-muted); min-width: 90px; }
+  .sum-value { color: var(--text); text-align: right; flex: 1; }
+
+  /* ─── SUCCESS ─── */
+  .success-card {
+    background: var(--white); border-radius: var(--radius);
+    border: 1px solid var(--border); padding: 40px 24px;
+    text-align: center; margin-bottom: 16px;
+  }
+  .success-icon { font-size: 52px; margin-bottom: 14px; }
+  .success-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .success-sub { font-size: 13px; color: var(--text-muted); line-height: 1.8; }
+  .success-note {
+    background: var(--bg); border-radius: var(--radius-sm);
+    padding: 14px 18px; margin: 20px 0; text-align: left;
+    font-size: 12px; color: var(--text-mid); line-height: 1.8;
+  }
+
+  /* ─── MISC ─── */
+  .empty { text-align: center; padding: 60px 24px; color: var(--text-muted); font-size: 13px; }
+
+  @media (max-width: 700px) {
+    .sitter-grid { grid-template-columns: 1fr 1fr; }
+    .hero, .filter-bar, .list-wrap, .detail-wrap { padding-left: 16px; padding-right: 16px; }
+    .header { padding: 0 16px; }
+    .header-links button:first-child { display: none; }
+    .dh-top { flex-direction: column; gap: 14px; }
+    .dh-stats { grid-template-columns: repeat(3,1fr); }
+    .hero h1 { font-size: 18px; }
+    .search-row { flex-wrap: wrap; padding: 10px; }
+    .search-row select { border-left: none; padding-left: 0; border-top: 1px solid var(--border); padding-top: 8px; width: 100%; }
+    .search-row button { width: 100%; }
+    .sc-img { height: 120px; }
+  }
+  @media (max-width: 480px) {
+    .sitter-grid { grid-template-columns: 1fr; }
+    .two, .three { grid-template-columns: 1fr; }
+    .detail-wrap { padding: 16px; }
+    .form-card { padding: 16px; }
+    .btn-row { flex-direction: column; }
+    .form-btn { width: 100%; text-align: center; }
+    .dh-top { padding: 16px; }
+    .dh-bio { padding: 14px 16px; }
+    .detail-section { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">PETS LINE <span>ペットシッター検索・依頼</span></div>
+  <div class="header-links">
+    <button class="btn-ghost">シッター登録</button>
+    <button class="btn-solid">ログイン</button>
+  </div>
+</header>
+
+<div class="hero">
+  <h1>信頼できるペットシッターを、すぐに見つける</h1>
+  <p>エリア・サービスで絞り込んで、写真・料金・空き状況を比較。LINEの往復なしで依頼できます。</p>
+  <div class="search-row">
+    <input id="area-input" placeholder="エリアや駅名（例: 渋谷区、三軒茶屋）" />
+    <select id="svc-filter">
+      <option value="">すべてのサービス</option>
+      <option value="お留守番">お留守番</option>
+      <option value="お散歩">お散歩</option>
+      <option value="お泊まり">お泊まり</option>
+      <option value="病院付き添い">病院付き添い</option>
+    </select>
+    <button onclick="doSearch()">🔍 検索</button>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <button class="fchip on" onclick="toggleFilter(this,'all')">すべて</button>
+  <button class="fchip" onclick="toggleFilter(this,'小型犬')">小型犬</button>
+  <button class="fchip" onclick="toggleFilter(this,'中型犬')">中型犬</button>
+  <button class="fchip" onclick="toggleFilter(this,'大型犬')">大型犬</button>
+  <button class="fchip" onclick="toggleFilter(this,'猫')">猫</button>
+  <button class="fchip" onclick="toggleFilter(this,'投薬対応')">投薬対応</button>
+  <button class="fchip" onclick="toggleFilter(this,'お泊まり可')">お泊まり可</button>
+  <button class="fchip" onclick="toggleFilter(this,'医療ケア')">医療ケア</button>
+</div>
+
+<div id="page-list" class="page on">
+  <div class="list-wrap">
+    <div class="list-meta" id="list-meta">検索結果: <strong>4人</strong>のシッター（渋谷区・世田谷区エリア）</div>
+    <div class="sitter-grid" id="sitter-grid"></div>
+  </div>
+</div>
+
+<div id="page-detail" class="page">
+  <div class="detail-wrap">
+    <button class="back-btn" onclick="showList()">← シッター一覧に戻る</button>
+
+    <div class="detail-hero">
+      <div class="dh-top">
+        <div class="dh-avatar" id="dh-avatar"></div>
+        <div class="dh-info">
+          <div class="dh-name" id="dh-name"></div>
+          <div class="dh-sub" id="dh-sub"></div>
+          <div class="dh-tags" id="dh-tags"></div>
+          <button class="btn-solid" style="padding:10px 28px;font-size:13px;border-radius:8px;" onclick="scrollToForm()">この人に依頼する →</button>
+        </div>
+      </div>
+      <div class="dh-stats" id="dh-stats"></div>
+      <div class="dh-bio" id="dh-bio"></div>
+    </div>
+
+    <div class="detail-section">
+      <div class="sec-head"><span>💰</span> 料金表</div>
+      <table class="price-table" id="dh-prices"></table>
+    </div>
+
+    <div class="detail-section">
+      <div class="sec-head"><span>📅</span> 今週の空き状況</div>
+      <div class="week-grid" id="dh-avail"></div>
+    </div>
+
+    <div class="form-card" id="form-anchor">
+      <div class="form-head" id="form-title">依頼フォーム</div>
+      <div class="form-sub" id="form-sub">必要情報をまとめて入力。AIが不足チェック＋見積もりを自動でします。</div>
+      <div class="step-progress" id="step-bar"></div>
+      <div id="form-body"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SITTERS = [
+  {
+    id:1, name:'さおり', emoji:'👩', bg:'#FBEAF0', textColor:'#72243E',
+    title:'ペットシッター歴5年・小型犬&猫専門',
+    area:'渋谷区・世田谷区・目黒区',
+    badge:'人気No.1', badgeClass:'badge-top',
+    tags:['小型犬','猫','投薬対応','お泊まり可'],
+    price:2000, unit:'時間', rating:4.9, reviews:127, jobs:312,
+    bio:'ペットシッター歴5年。小型犬・猫を中心に、お留守番から病院付き添いまで幅広く対応しています。WanCalアプリの開発者でもあり、ペットのケアに真剣に向き合っています。投薬・医療ケアの実績多数。ご不安なことはなんでもお気軽にご相談ください。',
+    prices:[['お留守番','¥2,000 / 時間'],['お散歩（30分）','¥1,500'],['お泊まり','¥8,000 / 泊'],['投薬オプション','+¥500'],['深夜・早朝対応','+¥1,000'],['2頭目以降','半額']],
+    avail:['open','open','busy','open','open','open','busy']
+  },
+  {
+    id:2, name:'たかし', emoji:'👨', bg:'#E6F1FB', textColor:'#0C447C',
+    title:'元動物病院スタッフ・医療ケア得意',
+    area:'渋谷区・新宿区・中野区',
+    badge:'新規登録', badgeClass:'badge-new',
+    tags:['全犬種','猫','投薬対応','医療ケア'],
+    price:2500, unit:'時間', rating:4.7, reviews:43, jobs:88,
+    bio:'動物病院で3年勤務後、独立しました。投薬・皮下点滴・ネブライザーなど医療ケアが必要なペットも安心してお任せください。高齢ペットのお世話も得意です。',
+    prices:[['お留守番','¥2,500 / 時間'],['お散歩（30分）','¥2,000'],['お泊まり','¥9,000 / 泊'],['医療ケア','+¥1,500'],['深夜対応','+¥2,000']],
+    avail:['busy','open','open','open','busy','open','open']
+  },
+  {
+    id:3, name:'みき', emoji:'👩', bg:'#E1F5EE', textColor:'#085041',
+    title:'大型犬・多頭飼い専門シッター',
+    area:'世田谷区・目黒区・品川区',
+    badge:null, badgeClass:'',
+    tags:['大型犬','中型犬','多頭飼い','お散歩'],
+    price:1800, unit:'時間', rating:4.8, reviews:89, jobs:201,
+    bio:'大型犬・多頭飼いのご家庭専門。ゴールデンレトリバー、ハスキー、ボーダーコリーなど大型・活発な犬種の扱いに自信あり。多頭飼い（最大4頭）も対応可能です。',
+    prices:[['お留守番','¥1,800 / 時間'],['お散歩（30分）','¥1,200'],['お泊まり','¥7,500 / 泊'],['2頭目以降','+¥500 / 頭'],['大型犬割増','+¥500']],
+    avail:['open','busy','open','open','open','busy','open']
+  },
+  {
+    id:4, name:'ゆか', emoji:'👩', bg:'#FAEEDA', textColor:'#633806',
+    title:'猫専門シッター・フリーランス5年',
+    area:'渋谷区・港区・中目黒',
+    badge:null, badgeClass:'',
+    tags:['猫専門','多頭飼い','投薬対応','お泊まり可'],
+    price:1500, unit:'時間', rating:4.9, reviews:214, jobs:445,
+    bio:'猫専門シッター。長期出張・旅行中の猫のお世話が得意。多頭飼い（最大5頭まで）対応。毎日写真・動画を送るので、遠くにいても安心です。',
+    prices:[['お留守番','¥1,500 / 時間'],['2頭目以降','+¥500 / 頭'],['お泊まり（猫宅）','¥6,000 / 泊'],['投薬','+¥500'],['7日以上','10% OFF']],
+    avail:['open','open','open','busy','open','open','busy']
+  }
+];
+
+const DAYS = ['月','火','水','木','金','土','日'];
+let curSitter = null;
+let formStep = 1;
+let formData = {};
+
+function renderGrid(list) {
+  const g = document.getElementById('sitter-grid');
+  if (!list.length) { g.innerHTML = '<div class="empty">条件に合うシッターが見つかりませんでした。</div>'; return; }
+  g.innerHTML = list.map(s => `
+    <div class="sitter-card" onclick="showDetail(${s.id})">
+      <div class="sc-img" style="background:${s.bg};">
+        <span style="font-size:56px;">${s.emoji}</span>
+        ${s.badge ? `<span class="sc-badge ${s.badgeClass}">${s.badge}</span>` : ''}
+        <span class="sc-avail">${s.area.split('・')[0]}</span>
+      </div>
+      <div class="sc-body">
+        <div class="sc-name">${s.name}</div>
+        <div class="sc-title">${s.title}</div>
+        <div class="sc-tags">${s.tags.map(t => `<span class="sc-tag sc-tag-pink">${t}</span>`).join('')}</div>
+        <div class="sc-footer">
+          <div class="sc-price">¥${s.price.toLocaleString()}<small> /${s.unit}〜</small></div>
+          <div class="sc-stars"><span class="star">★</span>${s.rating} <span>(${s.reviews}件)</span></div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function doSearch() {
+  const area = document.getElementById('area-input').value;
+  document.getElementById('list-meta').innerHTML = `検索結果: <strong>${SITTERS.length}人</strong>のシッター${area ? '（' + area + '）' : '（渋谷区・世田谷区エリア）'}`;
+  renderGrid(SITTERS);
+}
+
+function toggleFilter(el, tag) {
+  document.querySelectorAll('.fchip').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  if (tag === 'all') { renderGrid(SITTERS); return; }
+  renderGrid(SITTERS.filter(s => s.tags.includes(tag)));
+}
+
+function showList() {
+  document.getElementById('page-list').classList.add('on');
+  document.getElementById('page-detail').classList.remove('on');
+  window.scrollTo(0, 0);
+}
+
+function showDetail(id) {
+  curSitter = SITTERS.find(s => s.id === id);
+  if (!curSitter) return;
+  document.getElementById('page-list').classList.remove('on');
+  document.getElementById('page-detail').classList.add('on');
+  window.scrollTo(0, 0);
+
+  const av = document.getElementById('dh-avatar');
+  av.style.background = curSitter.bg;
+  av.textContent = curSitter.emoji;
+
+  document.getElementById('dh-name').textContent = curSitter.name;
+  document.getElementById('dh-sub').textContent = curSitter.title + '｜' + curSitter.area;
+  document.getElementById('dh-tags').innerHTML = curSitter.tags.map(t => `<span class="dh-tag">${t}</span>`).join('');
+  document.getElementById('dh-bio').textContent = curSitter.bio;
+
+  document.getElementById('dh-stats').innerHTML = [
+    { v: '★' + curSitter.rating, l: '評価' },
+    { v: curSitter.reviews + '件', l: 'レビュー' },
+    { v: curSitter.jobs + '回', l: '対応実績' }
+  ].map(s => `<div class="dh-stat"><div class="dh-stat-val">${s.v}</div><div class="dh-stat-lbl">${s.l}</div></div>`).join('');
+
+  document.getElementById('dh-prices').innerHTML = curSitter.prices
+    .map(([l, v]) => `<tr><td>${l}</td><td>${v}</td></tr>`).join('');
+
+  document.getElementById('dh-avail').innerHTML = DAYS.map((d, i) => `
+    <div class="day-col">
+      <div class="day-name">${d}</div>
+      <div class="day-slot ${curSitter.avail[i] === 'open' ? 'ds-open' : 'ds-busy'}">${curSitter.avail[i] === 'open' ? '◯' : '×'}</div>
+    </div>`).join('');
+
+  document.getElementById('form-title').textContent = curSitter.name + 'さんに依頼する';
+  formStep = 1;
+  formData = {};
+  renderForm();
+}
+
+function scrollToForm() {
+  document.getElementById('form-anchor').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function setStepBar(active) {
+  const steps = ['ペット情報', '依頼内容', '内容確認', '完了'];
+  document.getElementById('step-bar').innerHTML = steps.map((s, i) => {
+    const n = i + 1;
+    const cls = n < active ? 'done' : n === active ? 'active' : '';
+    return `<div class="step-item ${cls}">${n < active ? '✓ ' : n + '. '}${s}</div>`;
+  }).join('');
+}
+
+function getChipVal(group) {
+  const el = document.querySelector(`.chip-group[data-g="${group}"] .chip.on`);
+  return el ? el.textContent : '';
+}
+
+function renderForm() {
+  setStepBar(formStep);
+  const fb = document.getElementById('form-body');
+
+  if (formStep === 1) {
+    fb.innerHTML = `
+      <div class="two">
+        <div class="fl"><label>お名前 <span class="req">*</span></label><input id="f-name" placeholder="山田 花子" value="${formData.name||''}"/></div>
+        <div class="fl"><label>連絡先（LINE ID / 電話） <span class="req">*</span></label><input id="f-contact" placeholder="090-xxxx-xxxx" value="${formData.contact||''}"/></div>
+      </div>
+      <div class="fl"><label>ペットの名前・種類・年齢 <span class="req">*</span></label><input id="f-pet" placeholder="例: ムギ（トイプードル・3歳・オス）" value="${formData.pet||''}"/></div>
+      <div class="fl"><label>体重</label>
+        <div class="chip-group" data-g="weight">
+          <span class="chip ${(formData.weight||'〜5kg')==='〜5kg'?'on':''}" onclick="toggleChip(this,'weight')">〜5kg（小型）</span>
+          <span class="chip ${formData.weight==='5〜15kg'?'on':''}" onclick="toggleChip(this,'weight')">5〜15kg（中型）</span>
+          <span class="chip ${formData.weight==='15kg〜'?'on':''}" onclick="toggleChip(this,'weight')">15kg〜（大型）</span>
+        </div>
+      </div>
+      <div class="fl"><label>投薬対応</label>
+        <div class="chip-group" data-g="med">
+          <span class="chip ${(formData.med||'不要')==='不要'?'on':''}" onclick="toggleChip(this,'med')">不要</span>
+          <span class="chip ${formData.med==='1日1回'?'on':''}" onclick="toggleChip(this,'med')">1日1回</span>
+          <span class="chip ${formData.med==='1日2回以上'?'on':''}" onclick="toggleChip(this,'med')">1日2回以上</span>
+        </div>
+      </div>
+      <div class="fl"><label>特記事項（アレルギー・持病・性格など）</label><textarea id="f-notes" placeholder="例: 知らない人に慣れるのに時間がかかります。フードはロイヤルカナンです。">${formData.notes||''}</textarea></div>
+      <div class="btn-row"><button class="form-btn form-btn-next" onclick="goStep(2)">次へ → 依頼内容</button></div>`;
+
+  } else if (formStep === 2) {
+    const today = new Date().toISOString().split('T')[0];
+    fb.innerHTML = `
+      <div class="fl"><label>サービス <span class="req">*</span></label>
+        <div class="chip-group" data-g="svc">
+          <span class="chip ${(formData.svc||'お留守番')==='お留守番'?'on':''}" onclick="toggleChip(this,'svc')">お留守番</span>
+          <span class="chip ${formData.svc==='お散歩'?'on':''}" onclick="toggleChip(this,'svc')">お散歩</span>
+          <span class="chip ${formData.svc==='お泊まり'?'on':''}" onclick="toggleChip(this,'svc')">お泊まり</span>
+          <span class="chip ${formData.svc==='病院付き添い'?'on':''}" onclick="toggleChip(this,'svc')">病院付き添い</span>
+        </div>
+      </div>
+      <div class="two">
+        <div class="fl"><label>開始日 <span class="req">*</span></label><input type="date" id="f-start" value="${formData.start||today}"/></div>
+        <div class="fl"><label>終了日（複数日の場合）</label><input type="date" id="f-end" value="${formData.end||''}"/></div>
+      </div>
+      <div class="two">
+        <div class="fl"><label>開始時間</label><input type="time" id="f-stime" value="${formData.stime||'10:00'}"/></div>
+        <div class="fl"><label>終了時間</label><input type="time" id="f-etime" value="${formData.etime||'18:00'}"/></div>
+      </div>
+      <div class="fl"><label>訪問場所</label>
+        <div class="chip-group" data-g="place">
+          <span class="chip ${(formData.place||'自宅訪問')==='自宅訪問'?'on':''}" onclick="toggleChip(this,'place')">自宅訪問</span>
+          <span class="chip ${formData.place==='シッター宅'?'on':''}" onclick="toggleChip(this,'place')">シッター宅</span>
+        </div>
+      </div>
+      <div class="fl"><label>住所（自宅訪問の場合）</label><input id="f-addr" placeholder="東京都渋谷区〇〇 ×丁目" value="${formData.addr||''}"/></div>
+      <div class="fl"><label>ご要望・伝えておきたいこと</label><textarea id="f-req" placeholder="例: 散歩は公園を2周。16時にご飯100g。緊急連絡先は〇〇です。">${formData.req||''}</textarea></div>
+      <div class="btn-row">
+        <button class="form-btn form-btn-back" onclick="goStep(1)">← 戻る</button>
+        <button class="form-btn form-btn-next" onclick="goStep(3)">AIに確認してもらう</button>
+      </div>`;
+
+  } else if (formStep === 3) {
+    fb.innerHTML = `
+      <div class="ai-label"><span class="spinner" id="ai-spin"></span><span id="ai-lbl">AIが内容を確認・整理中...</span></div>
+      <div class="ai-box" id="ai-out">確認中...</div>
+      <div class="price-estimate">
+        <div><div class="pe-label">AI自動見積もり（目安）</div><div class="pe-note" id="pe-note"></div></div>
+        <div class="pe-value" id="pe-val">計算中...</div>
+      </div>
+      <div class="summary-rows" id="sum-rows"></div>
+      <div class="btn-row" id="f3btns" style="display:none;">
+        <button class="form-btn form-btn-back" onclick="goStep(2)">← 修正する</button>
+        <button class="form-btn form-btn-next" onclick="goStep(4)">この内容で送信する →</button>
+      </div>`;
+    runAI();
+
+  } else if (formStep === 4) {
+    fb.innerHTML = `
+      <div class="success-card">
+        <div class="success-icon">🎉</div>
+        <div class="success-title">${curSitter.name}さんに依頼を送信しました</div>
+        <div class="success-sub">内容を確認し、見積もりと空き状況を<br><strong>1〜2時間以内</strong>にご連絡します。</div>
+        <div class="success-note">
+          <strong>送信内容のまとめ</strong><br>
+          依頼者: ${formData.name} / ペット: ${formData.pet}<br>
+          サービス: ${formData.svc} / 日時: ${formData.start} ${formData.stime}〜${formData.etime}<br>
+          場所: ${formData.place}${formData.addr ? ' / ' + formData.addr : ''}<br>
+          目安金額: <strong style="color:var(--pink);">¥${(formData.estimate||0).toLocaleString()}</strong>
+        </div>
+        <button class="btn-solid" style="padding:11px 28px;font-size:13px;border-radius:8px;" onclick="showList()">← シッター一覧に戻る</button>
+      </div>`;
+  }
+}
+
+function toggleChip(el, group) {
+  el.closest('.chip-group').querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+}
+
+function saveStep1() {
+  formData.name = (document.getElementById('f-name')||{}).value || '';
+  formData.contact = (document.getElementById('f-contact')||{}).value || '';
+  formData.pet = (document.getElementById('f-pet')||{}).value || '';
+  formData.weight = getChipVal('weight') || '〜5kg';
+  formData.med = getChipVal('med') || '不要';
+  formData.notes = (document.getElementById('f-notes')||{}).value || 'なし';
+}
+
+function saveStep2() {
+  formData.svc = getChipVal('svc') || 'お留守番';
+  formData.start = (document.getElementById('f-start')||{}).value || '';
+  formData.end = (document.getElementById('f-end')||{}).value || '';
+  formData.stime = (document.getElementById('f-stime')||{}).value || '10:00';
+  formData.etime = (document.getElementById('f-etime')||{}).value || '18:00';
+  formData.place = getChipVal('place') || '自宅訪問';
+  formData.addr = (document.getElementById('f-addr')||{}).value || '';
+  formData.req = (document.getElementById('f-req')||{}).value || 'なし';
+}
+
+function goStep(n) {
+  if (n === 2) {
+    saveStep1();
+    if (!formData.name || !formData.pet) { alert('お名前とペット情報は必須です'); return; }
+  }
+  if (n === 3) {
+    saveStep2();
+    if (!formData.start) { alert('開始日を入力してください'); return; }
+  }
+  formStep = n;
+  renderForm();
+  document.getElementById('form-anchor').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function calcEstimate() {
+  const baseMap = {'お留守番':curSitter.prices[0][1],'お散歩':curSitter.prices[1][1],'お泊まり':curSitter.prices[2][1]};
+  const baseStr = (baseMap[formData.svc] || curSitter.prices[0][1]);
+  const baseNum = parseInt(baseStr.replace(/[^0-9]/g,'')) || 2000;
+  let price = baseNum;
+  if (formData.svc === 'お留守番' && formData.stime && formData.etime) {
+    const [sh, sm] = formData.stime.split(':').map(Number);
+    const [eh, em] = formData.etime.split(':').map(Number);
+    const hrs = Math.max(1, ((eh * 60 + em) - (sh * 60 + sm)) / 60);
+    price = Math.round(baseNum * hrs);
+  }
+  if (formData.svc === 'お泊まり' && formData.start && formData.end) {
+    const nights = Math.max(1, (new Date(formData.end) - new Date(formData.start)) / 86400000);
+    price = Math.round(baseNum * nights);
+  }
+  if (formData.med === '1日1回') price += 500;
+  if (formData.med === '1日2回以上') price += 1000;
+  return price;
+}
+
+async function runAI() {
+  const d = formData;
+  const price = calcEstimate();
+  formData.estimate = price;
+
+  document.getElementById('pe-val').textContent = '¥' + price.toLocaleString();
+  document.getElementById('pe-note').textContent = d.svc + ' ' + d.stime + '〜' + d.etime + (d.med !== '不要' ? '・投薬あり' : '');
+
+  document.getElementById('sum-rows').innerHTML = [
+    ['依頼先', curSitter.name],
+    ['ペット', d.pet + '（' + d.weight + '）'],
+    ['サービス', d.svc],
+    ['日時', d.start + (d.end ? ' 〜 ' + d.end : '') + '  ' + d.stime + '〜' + d.etime],
+    ['場所', d.place + (d.addr ? ' / ' + d.addr : '')],
+    ['投薬', d.med],
+    ['特記', d.notes],
+    ['ご要望', d.req]
+  ].map(([l, v]) => `<div class="sum-row"><span class="sum-label">${l}</span><span class="sum-value">${v}</span></div>`).join('');
+
+  const prompt = `ペットシッター「${curSitter.name}」への依頼内容を確認してください。
+ペット: ${d.pet}（${d.weight}）
+投薬: ${d.med} / 特記: ${d.notes}
+サービス: ${d.svc}
+日時: ${d.start}${d.end?' 〜 '+d.end:''} ${d.stime}〜${d.etime}
+場所: ${d.place}${d.addr?' / '+d.addr:''}
+ご要望: ${d.req}
+
+以下を100字以内で簡潔に:
+1. 内容を1文で要約
+2. 不足・曖昧な情報があれば一点だけ指摘
+3. 問題なければ「この内容で送信できます」と一言`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await res.json();
+    document.getElementById('ai-out').textContent = data.content?.[0]?.text || '確認完了';
+  } catch(e) {
+    document.getElementById('ai-out').textContent = 'この内容でシッターに送信できます。';
+  }
+  document.getElementById('ai-spin').style.display = 'none';
+  document.getElementById('ai-lbl').textContent = 'AI確認完了';
+  document.getElementById('f3btns').style.display = 'flex';
+}
+
+renderGrid(SITTERS);
+</script>
+</body>
+</html>
