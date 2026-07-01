@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PET MERIT — シッター管理ダッシュボード</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+:root{
+  --green:#2A7C5F;--green-d:#1A5C45;--green-l:#E8F5F0;--green-m:#9FCFBE;
+  --sand:#F7F4EE;--sand-d:#EAE5D8;--white:#FFFFFF;
+  --text:#1C1C1A;--text-m:#5C5C58;--text-s:#9C9C96;
+  --border:#E2DDD4;--radius:12px;--radius-s:8px;
+  --pink:#E05A7A;--pink-l:#FDEEF3;--pink-m:#F4C0D1;
+  --amber:#C47D1E;--amber-l:#FEF3E2;--sidebar:220px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--sand);color:var(--text);font-size:14px;line-height:1.6;display:flex;min-height:100vh;}
+.sidebar{width:var(--sidebar);background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:50;transform:translateX(-100%);transition:transform .25s ease;}
+.sidebar.open{transform:translateX(0);}
+.sb-logo{padding:18px 18px 14px;border-bottom:1px solid var(--border);}
+.sb-logo .logo{font-size:17px;font-weight:700;color:var(--green);}
+.sb-logo small{font-size:10px;color:var(--text-s);display:block;margin-top:1px;}
+.nav-sec{padding:12px 10px 4px;font-size:10px;font-weight:700;color:var(--text-s);letter-spacing:.06em;}
+.nav-item{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:var(--radius-s);margin:1px 6px;font-size:13px;color:var(--text-m);cursor:pointer;border:none;background:none;font-family:inherit;width:calc(100% - 12px);text-align:left;transition:all .15s;}
+.nav-item:hover{background:var(--sand);color:var(--text);}
+.nav-item.active{background:var(--green-l);color:var(--green-d);font-weight:700;}
+.nav-item .icon{font-size:16px;width:20px;text-align:center;}
+.nav-badge{margin-left:auto;background:var(--pink);color:var(--white);font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;}
+.sb-profile{margin-top:auto;padding:14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.sb-av{width:34px;height:34px;border-radius:50%;background:var(--green-l);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.sb-name{font-size:13px;font-weight:700;}
+.sb-status{font-size:11px;color:var(--green);}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:49;}
+.sidebar-overlay.on{display:block;}
+.main{flex:1;margin-left:0;}
+.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 20px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;}
+.topbar-left{display:flex;align-items:center;gap:10px;}
+.ham{background:none;border:none;cursor:pointer;font-size:22px;color:var(--text);padding:4px;}
+.topbar-title{font-size:15px;font-weight:700;}@media(max-width:380px){.topbar-title{font-size:13px;}}
+.topbar-right{display:flex;align-items:center;gap:8px;}
+.tbtn{padding:6px 14px;font-size:12px;border-radius:20px;cursor:pointer;font-family:inherit;border:1px solid var(--border);background:none;color:var(--text-m);}
+.tbtn:hover{border-color:var(--green);color:var(--green);}
+.tbtn-primary{background:var(--green);color:var(--white);border-color:var(--green);}
+.tbtn-primary:hover{background:var(--green-d);}
+@media(max-width:480px){.tbtn.hide-sm{display:none;}}
+.page{display:none;padding:24px 20px;}@media(max-width:480px){.page{padding:14px 12px;}}
+.page.on{display:block;}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+@media(max-width:700px){.metrics{grid-template-columns:repeat(2,1fr);gap:10px;}}.metric-val{font-size:20px;}.metric{padding:12px 14px;}
+.metric{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);padding:16px 18px;}
+.metric-lbl{font-size:11px;color:var(--text-s);margin-bottom:6px;font-weight:500;}
+.metric-val{font-size:24px;font-weight:700;line-height:1;}
+.metric-sub{font-size:11px;color:var(--text-s);margin-top:5px;}
+.up{color:var(--green);font-weight:700;}
+.card{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);padding:18px 20px;margin-bottom:16px;}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.card-title{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;}
+.card-link{font-size:12px;color:var(--green);cursor:pointer;background:none;border:none;font-family:inherit;}
+.card-link:hover{text-decoration:underline;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+@media(max-width:700px){.two-col{grid-template-columns:1fr;}}
+.pill{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;display:inline-block;}
+.p-new{background:var(--pink-l);color:var(--pink);}
+.p-confirmed{background:var(--green-l);color:var(--green-d);}
+.p-inprogress{background:var(--amber-l);color:var(--amber);}
+.p-done{background:var(--sand-d);color:var(--text-s);}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.tbl th{text-align:left;padding:8px 10px;font-size:11px;font-weight:700;color:var(--text-s);border-bottom:1px solid var(--border);background:var(--sand);}
+.tbl td{padding:11px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:var(--sand);}
+.spin{width:11px;height:11px;border:2px solid var(--green-m);border-top-color:var(--green);border-radius:50%;animation:sp .8s linear infinite;display:inline-block;}
+@keyframes sp{to{transform:rotate(360deg)}}
+.tl{display:flex;flex-direction:column;}
+.tl-item{display:flex;gap:10px;padding-bottom:14px;}
+.tl-item:last-child{padding-bottom:0;}
+.tl-left{display:flex;flex-direction:column;align-items:center;flex-shrink:0;}
+.tl-dot{width:9px;height:9px;border-radius:50%;background:var(--green);margin-top:3px;}
+.tl-line{flex:1;width:1px;background:var(--border);margin-top:3px;}
+.tl-item:last-child .tl-line{display:none;}
+.tl-title{font-size:13px;font-weight:700;margin-bottom:1px;}
+.tl-sub{font-size:11px;color:var(--text-s);}
+.req-card{border:1px solid var(--pink-m);border-radius:var(--radius);padding:14px;background:var(--white);margin-bottom:10px;}
+.req-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;}
+.req-detail{font-size:12px;color:var(--text-m);margin-bottom:10px;line-height:1.7;}
+
+/* ══ CALENDAR FULL ══ */
+.cal-wrap{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;margin-bottom:16px;}
+.cal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);}
+.cal-nav{background:none;border:1px solid var(--border);border-radius:20px;padding:4px 12px;cursor:pointer;font-size:12px;color:var(--text-m);font-family:inherit;}
+.cal-nav:hover{border-color:var(--green);color:var(--green);}
+.cal-month{font-size:15px;font-weight:700;}
+.cal-grid-full{display:grid;grid-template-columns:repeat(7,1fr);border-top:1px solid var(--border);}
+.cal-dn{text-align:center;padding:8px 4px;font-size:11px;font-weight:700;color:var(--text-s);border-bottom:1px solid var(--border);background:var(--sand);}
+.cal-cell{min-height:72px;padding:6px 8px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;}
+.cal-cell:nth-child(7n){border-right:none;}
+.cal-cell:hover{background:var(--sand);}
+.cal-cell.today{background:var(--green-l);}
+.cal-cell.selected{background:var(--green-l);border:2px solid var(--green);}
+.cal-cell.other-month{opacity:.35;}
+.cal-cell-num{font-size:12px;font-weight:700;margin-bottom:4px;color:var(--text);}
+.cal-cell.today .cal-cell-num{color:var(--green-d);}
+.cal-ev{font-size:10px;padding:2px 5px;border-radius:4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ev-g{background:var(--green-l);color:var(--green-d);}
+.ev-p{background:var(--pink-l);color:var(--pink);}
+.ev-a{background:var(--amber-l);color:var(--amber);}
+.cal-detail{padding:16px 18px;border-top:1px solid var(--border);background:var(--sand);}
+.cal-detail-title{font-size:12px;font-weight:700;color:var(--text-m);margin-bottom:10px;}
+.cal-ev-item{display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--white);border-radius:var(--radius-s);margin-bottom:6px;border:1px solid var(--border);}
+.cal-ev-time{font-size:11px;font-weight:700;color:var(--green);min-width:70px;}
+.cal-ev-name{font-size:13px;font-weight:700;}
+.cal-ev-sub{font-size:11px;color:var(--text-s);}
+.cal-ev-status{margin-left:auto;}
+
+/* ══ PET KARTE FULL ══ */
+.karte-list{display:flex;flex-direction:column;gap:0;}
+.karte-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer;}
+.karte-row:last-child{border-bottom:none;}
+.karte-row:hover{margin:0 -20px;padding:12px 20px;background:var(--sand);border-radius:0;}
+.karte-av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.karte-info{flex:1;}
+.karte-name{font-size:14px;font-weight:700;}
+.karte-sub{font-size:11px;color:var(--text-s);}
+.karte-tags{display:flex;gap:4px;margin-top:3px;}
+/* 顧客カルテ */
+.customer-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px;}
+.cc-header{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;border-bottom:1px solid var(--border);}
+.cc-header:hover{background:var(--sand);}
+.cc-av{width:42px;height:42px;border-radius:50%;background:var(--pink-l);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.cc-name{font-size:15px;font-weight:700;}
+.cc-meta{font-size:11px;color:var(--text-s);margin-top:1px;}
+.cc-body{padding:14px 16px;display:none;}
+.cc-body.open{display:block;}
+.pet-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+.pet-chip{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;border:1px solid var(--border);background:var(--sand);cursor:pointer;font-size:12px;}
+.pet-chip.on{background:var(--pink-l);border-color:var(--pink-m);font-weight:700;}
+.pet-detail{background:var(--sand);border-radius:var(--radius-s);padding:14px;margin-bottom:10px;}
+.pd-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.pd-item{background:var(--white);border-radius:var(--radius-s);padding:8px 10px;}
+.pd-lbl{font-size:10px;color:var(--text-s);margin-bottom:2px;}
+.pd-val{font-size:13px;font-weight:500;}
+.med-warn{background:var(--amber-l);border:1px solid #EFC06A;border-radius:var(--radius-s);padding:9px 12px;font-size:12px;color:var(--amber);display:flex;align-items:center;gap:7px;margin-bottom:10px;}
+.history-list{display:flex;flex-direction:column;gap:5px;}
+.hist-item{display:flex;gap:10px;font-size:12px;padding:7px 10px;background:var(--white);border-radius:var(--radius-s);}
+.hist-date{color:var(--text-s);min-width:48px;font-weight:700;}
+/* 見積もり・請求書 */
+.invoice-modal{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:16px;}
+.invoice-modal.open{display:flex;}
+.invoice-wrap{background:var(--white);border-radius:var(--radius);width:100%;max-width:560px;max-height:92vh;overflow-y:auto;}
+.inv-toolbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--sand);}
+.inv-toolbar-title{font-size:14px;font-weight:700;}
+.inv-actions{display:flex;gap:8px;}
+.inv-btn{padding:7px 14px;font-size:12px;border-radius:20px;cursor:pointer;font-family:inherit;border:1px solid var(--border);background:var(--white);color:var(--text-m);}
+.inv-btn:hover{border-color:var(--pink);color:var(--pink);}
+.inv-btn-primary{background:var(--pink);color:var(--white);border-color:var(--pink);}
+.inv-btn-primary:hover{background:var(--pink-d);}
+.inv-close{background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-s);}
+/* 印刷用 見積もり・請求書 */
+.inv-doc{padding:28px 32px;font-family:'Noto Sans JP',sans-serif;}
+.inv-doc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid var(--pink);}
+.inv-doc-logo{font-size:18px;font-weight:700;color:var(--pink);}
+.inv-doc-logo-sub{font-size:11px;color:var(--text-s);margin-top:2px;}
+.inv-doc-type{font-size:22px;font-weight:700;color:var(--text);text-align:right;}
+.inv-doc-num{font-size:11px;color:var(--text-s);text-align:right;margin-top:3px;}
+.inv-doc-parties{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
+.inv-party-lbl{font-size:10px;color:var(--text-s);font-weight:700;margin-bottom:4px;letter-spacing:.06em;}
+.inv-party-name{font-size:15px;font-weight:700;}
+.inv-party-detail{font-size:12px;color:var(--text-m);margin-top:2px;line-height:1.6;}
+.inv-table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:13px;}
+.inv-table th{background:var(--sand);padding:8px 10px;text-align:left;font-size:11px;font-weight:700;color:var(--text-s);border-bottom:1px solid var(--border);}
+.inv-table td{padding:10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.inv-table td:last-child,.inv-table th:last-child{text-align:right;}
+.inv-totals{margin-left:auto;width:220px;}
+.inv-total-row{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid var(--border);}
+.inv-total-row:last-child{border-bottom:none;font-size:16px;font-weight:700;color:var(--pink);padding-top:8px;}
+.inv-note{margin-top:20px;padding:12px;background:var(--sand);border-radius:var(--radius-s);font-size:12px;color:var(--text-m);line-height:1.7;}
+.inv-footer{margin-top:24px;padding-top:14px;border-top:1px solid var(--border);font-size:11px;color:var(--text-s);text-align:center;}
+.ktag{font-size:10px;padding:1px 7px;border-radius:20px;}
+.ktag-g{background:var(--green-l);color:var(--green-d);}
+.ktag-r{background:var(--pink-l);color:var(--pink);}
+.ktag-a{background:var(--amber-l);color:var(--amber);}
+.ktag-s{background:var(--sand-d);color:var(--text-m);}
+.karte-arrow{color:var(--text-s);font-size:18px;}
+
+/* KARTE DETAIL MODAL (full page overlay) */
+.karte-detail{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.4);align-items:flex-start;justify-content:center;padding:20px;}
+.karte-detail.open{display:flex;}
+.karte-modal{background:var(--white);border-radius:var(--radius);width:100%;max-width:600px;max-height:90vh;overflow-y:auto;margin-top:20px;}
+.kd-header{display:flex;align-items:center;gap:14px;padding:20px;border-bottom:1px solid var(--border);}
+.kd-av{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;}
+.kd-name{font-size:20px;font-weight:700;}
+.kd-owner{font-size:12px;color:var(--text-s);}
+.kd-close{margin-left:auto;background:none;border:none;cursor:pointer;font-size:22px;color:var(--text-s);}
+.kd-body{padding:20px;}
+.kd-sec{margin-bottom:20px;}
+.kd-sec-title{font-size:12px;font-weight:700;color:var(--text-s);letter-spacing:.05em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.kd-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:480px){.kd-grid{grid-template-columns:1fr;}}
+.kd-field{background:var(--sand);border-radius:var(--radius-s);padding:10px 12px;}
+.kd-field-lbl{font-size:10px;color:var(--text-s);margin-bottom:3px;font-weight:700;}
+.kd-field-val{font-size:13px;font-weight:500;}
+.kd-med-alert{background:var(--amber-l);border:1px solid #EFC06A;border-radius:var(--radius-s);padding:10px 12px;font-size:13px;color:var(--amber);display:flex;align-items:flex-start;gap:8px;}
+.kd-note{background:var(--sand);border-radius:var(--radius-s);padding:10px 12px;font-size:13px;color:var(--text-m);line-height:1.7;}
+.kd-history{display:flex;flex-direction:column;gap:8px;}
+.kd-hist-item{display:flex;gap:10px;font-size:12px;padding:8px 10px;background:var(--sand);border-radius:var(--radius-s);}
+.kd-hist-date{color:var(--text-s);min-width:60px;font-weight:700;}
+.kd-hist-content{color:var(--text-m);}
+.kd-photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.kd-photo{aspect-ratio:1;border-radius:var(--radius-s);display:flex;align-items:center;justify-content:center;font-size:32px;background:var(--sand);}
+.care-check{display:flex;flex-direction:column;gap:6px;}
+.care-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--sand);border-radius:var(--radius-s);font-size:13px;}
+.care-check-box{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.care-check-box.checked{background:var(--green);border-color:var(--green);color:var(--white);}
+
+/* ══ LINE DEMO ══ */
+.line-demo{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px;}
+@media(max-width:600px){.line-demo{grid-template-columns:1fr;}}
+.line-left{background:var(--sand);padding:18px;border-right:1px solid var(--border);}
+.line-right{background:var(--white);padding:18px;}
+.line-sec-title{font-size:12px;font-weight:700;color:var(--text-m);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.line-scenario{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.line-sc-btn{padding:8px 12px;border-radius:var(--radius-s);border:1px solid var(--border);background:var(--white);font-size:12px;color:var(--text-m);cursor:pointer;font-family:inherit;text-align:left;transition:all .15s;}
+.line-sc-btn:hover,.line-sc-btn.active{background:var(--green-l);border-color:var(--green);color:var(--green-d);font-weight:700;}
+.line-input-area{display:flex;flex-direction:column;gap:8px;}
+.line-input-area textarea{width:100%;border:1px solid var(--border);border-radius:var(--radius-s);padding:10px;font-size:13px;font-family:inherit;color:var(--text);resize:none;min-height:80px;}
+.line-input-area textarea:focus{outline:none;border-color:var(--green);}
+.line-gen-btn{padding:9px 16px;background:var(--green);color:var(--white);border:none;border-radius:var(--radius-s);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
+.line-gen-btn:hover{background:var(--green-d);}
+.line-gen-btn:disabled{opacity:.6;cursor:not-allowed;}
+/* LINE phone mockup */
+.line-phone{background:#1E1E1E;border-radius:16px;overflow:hidden;max-width:280px;margin:0 auto;}
+.line-phone-header{background:#00B900;padding:10px 14px;display:flex;align-items:center;gap:8px;}
+.line-phone-name{font-size:13px;font-weight:700;color:var(--white);}
+.line-phone-sub{font-size:10px;color:rgba(255,255,255,.7);}
+.line-chat{background:#87CEAB;padding:12px;min-height:200px;display:flex;flex-direction:column;gap:8px;}
+.line-msg{max-width:85%;}
+.line-msg-recv{align-self:flex-start;display:flex;gap:6px;}
+.line-msg-sent{align-self:flex-end;}
+.line-bubble{padding:8px 11px;border-radius:14px;font-size:12px;line-height:1.5;}
+.line-msg-recv .line-bubble{background:var(--white);border-radius:4px 14px 14px 14px;}
+.line-msg-sent .line-bubble{background:#00B900;color:var(--white);border-radius:14px 4px 14px 14px;}
+.line-recv-av{width:28px;height:28px;border-radius:50%;background:var(--pink-l);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.line-time{font-size:9px;color:rgba(255,255,255,.7);margin-top:2px;}
+.line-msg-recv .line-time{text-align:left;padding-left:34px;}
+.line-msg-sent .line-time{text-align:right;}
+.line-result-box{background:var(--green-l);border:1px solid var(--green-m);border-radius:var(--radius-s);padding:12px;font-size:13px;color:var(--text);line-height:1.7;margin-top:10px;white-space:pre-wrap;}
+.line-copy-btn{padding:5px 12px;font-size:11px;border:1px solid var(--green-m);border-radius:20px;background:none;color:var(--green);cursor:pointer;font-family:inherit;margin-top:6px;}
+.line-copy-btn:hover{background:var(--green-l);}
+
+/* MESSAGES */
+.msg-layout{display:grid;grid-template-columns:260px 1fr;height:calc(100vh - 54px);}
+@media(max-width:700px){.msg-layout{grid-template-columns:1fr;}}
+.thread-list{background:var(--white);border-right:1px solid var(--border);overflow-y:auto;}
+.thread-head{padding:12px 14px;border-bottom:1px solid var(--border);font-size:13px;font-weight:700;}
+.thread-item{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--border);}
+.thread-item:hover,.thread-item.sel{background:var(--green-l);}
+.th-av{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.th-body{flex:1;min-width:0;}
+.th-name{font-size:13px;font-weight:700;margin-bottom:1px;}
+.th-prev{font-size:12px;color:var(--text-s);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.th-right{text-align:right;flex-shrink:0;}
+.th-time{font-size:10px;color:var(--text-s);}
+.th-unread{width:7px;height:7px;border-radius:50%;background:var(--pink);margin:3px 0 0 auto;}
+.chat-win{display:flex;flex-direction:column;height:100%;}
+.chat-win.mobile-hidden{display:none;}
+@media(max-width:700px){.chat-win.mobile-open{display:flex;position:fixed;inset:0;z-index:60;background:var(--white);flex-direction:column;}}
+.chat-top{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--white);}
+.chat-msgs{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:10px;background:var(--sand);}
+.msg-b{max-width:74%;}
+.msg-recv{align-self:flex-start;}
+.msg-sent{align-self:flex-end;}
+.msg-bubble{padding:9px 13px;border-radius:14px;font-size:13px;line-height:1.55;}
+.msg-recv .msg-bubble{background:var(--white);border:1px solid var(--border);border-bottom-left-radius:3px;}
+.msg-sent .msg-bubble{background:var(--green);color:var(--white);border-bottom-right-radius:3px;}
+.msg-meta{font-size:10px;color:var(--text-s);margin-top:2px;}
+.msg-recv .msg-meta{text-align:left;}
+.msg-sent .msg-meta{text-align:right;}
+.chat-footer{padding:10px 18px;border-top:1px solid var(--border);background:var(--white);}
+.chat-input-row{display:flex;gap:8px;align-items:flex-end;}
+.chat-input-row textarea{flex:1;border:1px solid var(--border);border-radius:var(--radius-s);padding:9px 12px;font-size:13px;font-family:inherit;color:var(--text);resize:none;max-height:90px;line-height:1.5;}
+.chat-input-row textarea:focus{outline:none;border-color:var(--green);}
+.chat-send-btn{padding:9px 16px;background:var(--green);color:var(--white);border:none;border-radius:var(--radius-s);cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;}
+.ai-draft-box{margin:6px 0 8px;padding:9px 12px;background:var(--green-l);border:1px solid var(--green-m);border-radius:var(--radius-s);font-size:12px;color:var(--green-d);display:flex;align-items:flex-start;gap:8px;}
+.use-btn{margin-left:auto;padding:3px 10px;background:var(--green);color:var(--white);border:none;border-radius:20px;font-size:11px;cursor:pointer;white-space:nowrap;}
+.ai-btn{padding:6px 14px;font-size:11px;border:1px solid var(--green-m);border-radius:20px;background:none;color:var(--green);cursor:pointer;font-family:inherit;margin-top:6px;}
+.ai-btn:hover{background:var(--green-l);}
+.bar-chart{display:flex;align-items:flex-end;gap:6px;height:110px;padding-top:8px;}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.bar{width:100%;border-radius:4px 4px 0 0;background:var(--green-l);position:relative;min-height:4px;}
+.bar.cur{background:var(--green);}
+.bar-v{font-size:9px;color:var(--text-s);position:absolute;top:-14px;left:50%;transform:translateX(-50%);white-space:nowrap;}
+.bar-lbl{font-size:10px;color:var(--text-s);}
+.prog-row{margin-bottom:12px;}
+.prog-head{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;}
+.prog-bar{background:var(--sand-d);border-radius:4px;height:7px;overflow:hidden;}
+.prog-fill{height:100%;background:var(--green);border-radius:4px;}
+.review-item{padding:12px 0;border-bottom:1px solid var(--border);}
+.review-item:last-child{border-bottom:none;}
+.review-head{display:flex;align-items:center;gap:8px;margin-bottom:3px;}
+.review-name{font-weight:700;font-size:12px;}
+.review-date{font-size:11px;color:var(--text-s);margin-left:auto;}
+.stars{color:#F0A500;}
+.review-text{font-size:12px;color:var(--text-m);line-height:1.7;}
+.replied-box{margin-top:6px;padding:8px 10px;background:var(--green-l);border-radius:var(--radius-s);font-size:12px;color:var(--green-d);border-left:3px solid var(--green);}
+.setting-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:14px 0;border-bottom:1px solid var(--border);}
+.setting-row:last-child{border-bottom:none;}
+.setting-lbl{font-size:13px;font-weight:700;min-width:130px;}
+.setting-desc{font-size:11px;color:var(--text-s);margin-top:1px;}
+.setting-val{font-size:13px;color:var(--text-m);text-align:right;flex:1;}
+.edit-btn{padding:4px 12px;font-size:11px;border:1px solid var(--border);border-radius:20px;background:none;cursor:pointer;color:var(--text-m);font-family:inherit;flex-shrink:0;}
+.edit-btn:hover{border-color:var(--green);color:var(--green);}
+.toggle{position:relative;display:inline-block;width:38px;height:20px;}
+.toggle input{display:none;}
+.toggle-sl{position:absolute;inset:0;border-radius:20px;background:var(--border);cursor:pointer;transition:.2s;}
+.toggle-sl:before{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:var(--white);top:3px;left:3px;transition:.2s;}
+.toggle input:checked+.toggle-sl{background:var(--green);}
+.toggle input:checked+.toggle-sl:before{transform:translateX(18px);}
+</style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sb-overlay" onclick="closeSb()"></div>
+<aside class="sidebar" id="sidebar">
+  <div class="sb-logo">
+    <div class="logo">PET MERIT</div>
+    <small>シッター管理ダッシュボード</small>
+  </div>
+  <div class="nav-sec">メイン</div>
+  <button class="nav-item active" onclick="nav('dashboard',this)"><span class="icon">🏠</span>ダッシュボード</button>
+  <button class="nav-item" onclick="nav('calendar',this)"><span class="icon">📅</span>予約カレンダー</button>
+  <button class="nav-item" onclick="nav('bookings',this)"><span class="icon">📋</span>予約管理<span class="nav-badge">2</span></button>
+  <button class="nav-item" onclick="nav('karte',this)"><span class="icon">🐾</span>ペットカルテ</button>
+  <button class="nav-item" onclick="nav('messages',this)"><span class="icon">💬</span>メッセージ<span class="nav-badge">3</span></button>
+  <button class="nav-item" onclick="nav('line',this)"><span class="icon">💚</span>LINE返信AI</button>
+  <button class="nav-item" onclick="nav('sales',this)"><span class="icon">💰</span>売上・収益</button>
+  <div class="nav-sec">設定</div>
+  <button class="nav-item" onclick="nav('reviews',this)"><span class="icon">⭐</span>口コミ管理</button>
+  <button class="nav-item" onclick="nav('settings',this)"><span class="icon">⚙️</span>プロフィール設定</button>
+  <div class="sb-profile">
+    <div class="sb-av">👩</div>
+    <div><div class="sb-name">さおり</div><div class="sb-status">● 受付中</div></div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="ham" onclick="toggleSb()">☰</button>
+      <div class="topbar-title" id="topbar-title">ダッシュボード</div>
+    </div>
+    <div class="topbar-right">
+      <button class="tbtn hide-sm" onclick="nav('bookings',null)">🔔 通知</button>
+      <button class="tbtn tbtn-primary hide-sm" onclick="nav('settings',null)">プロフィールを見る</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="page-dashboard" class="page on">
+    <div class="metrics">
+      <div class="metric"><div class="metric-lbl">今月の売上</div><div class="metric-val">¥184,500</div><div class="metric-sub"><span class="up">↑ 12%</span> 先月比</div></div>
+      <div class="metric"><div class="metric-lbl">今月の依頼数</div><div class="metric-val">23件</div><div class="metric-sub"><span class="up">↑ 4件</span> 先月比</div></div>
+      <div class="metric"><div class="metric-lbl">対応待ち</div><div class="metric-val" style="color:var(--pink);">2件</div><div class="metric-sub">見積もり未送信</div></div>
+      <div class="metric"><div class="metric-lbl">平均評価</div><div class="metric-val">4.9</div><div class="metric-sub">★ 127件</div></div>
+    </div>
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">📅 今日の予定（6/13）</div><button class="card-link" onclick="nav('calendar',null)">カレンダーで見る →</button></div>
+          <div class="tl">
+            <div class="tl-item"><div class="tl-left"><div class="tl-dot"></div><div class="tl-line"></div></div><div><div class="tl-title">山田 花子さん — お留守番</div><div class="tl-sub">10:00〜18:00 ｜ ムギ（トイプードル）<span class="pill p-inprogress" style="margin-left:6px;">進行中</span></div></div></div>
+            <div class="tl-item"><div class="tl-left"><div class="tl-dot" style="background:var(--border);"></div><div class="tl-line"></div></div><div><div class="tl-title">田中 美咲さん — お散歩</div><div class="tl-sub">15:00〜15:30 ｜ ハナ（ポメラニアン）</div></div></div>
+            <div class="tl-item"><div class="tl-left"><div class="tl-dot" style="background:var(--border);"></div></div><div><div class="tl-title">鈴木 一郎さん — お泊まり 1日目</div><div class="tl-sub">18:00〜 ｜ モコ・チョコ（猫×2）</div></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">🆕 新着依頼</div></div>
+          <div class="req-card">
+            <div class="req-head"><div><div style="font-size:13px;font-weight:700;">佐藤 美佳さん</div><div style="font-size:11px;color:var(--text-s);">6/18（水）10:00〜17:00 ｜ お留守番</div></div><span class="pill p-new">新規</span></div>
+            <div class="req-detail">チョコ（チワワ・5歳・投薬あり1日1回）<br>特記: 分離不安あり、静かな環境希望</div>
+            <div style="display:flex;gap:7px;"><button class="tbtn" onclick="nav('messages',null)">💬 返信</button><button class="tbtn tbtn-primary" onclick="genQuote(this,'佐藤 美佳','お留守番','チョコ（チワワ）')">✨ 見積もり生成</button></div>
+          </div>
+          <div class="req-card">
+            <div class="req-head"><div><div style="font-size:13px;font-weight:700;">中村 健太さん</div><div style="font-size:11px;color:var(--text-s);">6/20〜22 ｜ お泊まり（2泊）</div></div><span class="pill p-new">新規</span></div>
+            <div class="req-detail">ソラ・リン（柴犬×2・2歳・4歳）<br>特記: 散歩は別々。リンは引っ張り癖あり</div>
+            <div style="display:flex;gap:7px;"><button class="tbtn" onclick="nav('messages',null)">💬 返信</button><button class="tbtn tbtn-primary" onclick="genQuote(this,'中村 健太','お泊まり（2泊）','ソラ・リン（柴犬×2）')">✨ 見積もり生成</button></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">💬 最近のやりとり</div><button class="card-link" onclick="nav('messages',null)">すべて →</button></div>
+          <div id="dash-threads"></div>
+        </div>
+        <div class="card" style="background:var(--green-l);border-color:var(--green-m);">
+          <div class="card-title" style="margin-bottom:8px;">💚 LINE返信AIを試す</div>
+          <div style="font-size:12px;color:var(--text-m);margin-bottom:10px;">お客様からのLINEメッセージをAIが自動で返信文を生成します。</div>
+          <button class="tbtn tbtn-primary" onclick="nav('line',null)">LINE返信AI を開く →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALENDAR FULL -->
+  <div id="page-calendar" class="page">
+    <div class="cal-wrap">
+      <div class="cal-header">
+        <button class="cal-nav" onclick="changeMonth(-1)">← 前月</button>
+        <div class="cal-month" id="cal-month-title"></div>
+        <button class="cal-nav" onclick="changeMonth(1)">翌月 →</button>
+      </div>
+      <div class="cal-grid-full">
+        <div class="cal-dn">月</div><div class="cal-dn">火</div><div class="cal-dn">水</div>
+        <div class="cal-dn">木</div><div class="cal-dn">金</div>
+        <div class="cal-dn" style="color:var(--text-s);">土</div>
+        <div class="cal-dn" style="color:var(--pink);">日</div>
+        <div id="cal-cells"></div>
+      </div>
+      <div class="cal-detail" id="cal-detail">
+        <div class="cal-detail-title">日付を選択すると予定が表示されます</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--text-s);margin-bottom:16px;">
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--green-l);border:1px solid var(--green-m);margin-right:4px;vertical-align:middle;"></span>お留守番</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--pink-l);border:1px solid var(--pink-m);margin-right:4px;vertical-align:middle;"></span>お泊まり</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--amber-l);border:1px solid #EFC06A;margin-right:4px;vertical-align:middle;"></span>お散歩</span>
+    </div>
+  </div>
+
+  <!-- BOOKINGS -->
+  <div id="page-bookings" class="page">
+    <div style="display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;">
+      <button class="tbtn" onclick="filterB('all',this)" style="background:var(--green-l);border-color:var(--green);color:var(--green-d);font-weight:700;white-space:nowrap;flex-shrink:0;">すべて（7）</button>
+      <button class="tbtn" onclick="filterB('new',this)" style="white-space:nowrap;flex-shrink:0;">新規（2）</button>
+      <button class="tbtn" onclick="filterB('confirmed',this)" style="white-space:nowrap;flex-shrink:0;">確定（3）</button>
+      <button class="tbtn" onclick="filterB('inprogress',this)" style="white-space:nowrap;flex-shrink:0;">進行中（1）</button>
+      <button class="tbtn" onclick="filterB('done',this)" style="white-space:nowrap;flex-shrink:0;">完了（1）</button>
+    </div>
+    <div id="b-cards"></div>
+  </div>
+
+  <!-- PET KARTE -->
+  <div id="page-karte" class="page">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div style="font-size:12px;color:var(--text-s);">お客様: <strong>5名</strong> ／ 登録ペット: <strong>6頭</strong></div>
+      <button class="tbtn tbtn-primary">＋ 顧客を追加</button>
+    </div>
+    <div id="customer-karte-list"></div>
+  </div>
+
+  <!-- 見積もり・請求書モーダル -->
+  <div class="invoice-modal" id="invoice-modal" onclick="if(event.target===this)closeInvoice()">
+    <div class="invoice-wrap">
+      <div class="inv-toolbar">
+        <div class="inv-toolbar-title" id="inv-modal-title">見積もり書</div>
+        <div class="inv-actions">
+          <button class="inv-btn inv-btn-primary" onclick="printInvoice()">🖨️ 印刷 / PDF保存</button>
+          <button class="inv-close" onclick="closeInvoice()">×</button>
+        </div>
+      </div>
+      <div id="inv-doc-content"></div>
+    </div>
+  </div>
+
+  <!-- MESSAGES -->
+  <div id="page-messages" class="page" style="padding:0;">
+    <div class="msg-layout">
+      <div class="thread-list">
+        <div class="thread-head">メッセージ</div>
+        <div id="thread-list-full"></div>
+      </div>
+      <div class="chat-win mobile-hidden" id="chat-win">
+        <div style="display:flex;align-items:center;justify-content:center;flex:1;color:var(--text-s);font-size:13px;">← お客様を選んでください</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LINE DEMO -->
+  <div id="page-line" class="page">
+    <div style="margin-bottom:16px;">
+      <div style="font-size:13px;color:var(--text-m);line-height:1.8;">
+        お客様からLINEで届いたメッセージを入力すると、AIがペットシッターらしい<strong>返信文を自動生成</strong>します。<br>
+        よくある質問パターンから選ぶことも、自由入力することもできます。
+      </div>
+    </div>
+    <div class="line-demo">
+      <div class="line-left">
+        <div class="line-sec-title">📨 シナリオを選ぶ</div>
+        <div class="line-scenario" id="line-scenarios"></div>
+        <div class="line-sec-title" style="margin-top:14px;">✏️ または自由入力</div>
+        <div class="line-input-area">
+          <textarea id="line-input" placeholder="お客様からのLINEメッセージをここに入力..."></textarea>
+          <button class="line-gen-btn" onclick="genLineReply()">✨ 返信文を生成する</button>
+        </div>
+        <div id="line-output-area" style="margin-top:10px;"></div>
+      </div>
+      <div class="line-right">
+        <div class="line-sec-title">📱 LINEイメージ</div>
+        <div class="line-phone">
+          <div class="line-phone-header">
+            <div>
+              <div class="line-phone-name">さおりのペットシッター</div>
+              <div class="line-phone-sub">公式アカウント</div>
+            </div>
+          </div>
+          <div class="line-chat" id="line-chat">
+            <div class="line-msg line-msg-recv">
+              <div class="line-recv-av">🐶</div>
+              <div><div class="line-bubble" id="line-recv-bubble">ここに受信メッセージが表示されます</div><div class="line-time">既読</div></div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:12px;font-size:11px;color:var(--text-s);text-align:center;">「生成する」を押すとAI返信文がLINEイメージに表示されます</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title">📊 よくある質問カテゴリ</div></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+        <div style="background:var(--sand);border-radius:var(--radius-s);padding:12px;text-align:center;">
+          <div style="font-size:20px;margin-bottom:4px;">📅</div>
+          <div style="font-size:12px;font-weight:700;">予約・空き確認</div>
+          <div style="font-size:11px;color:var(--text-s);">最多の問い合わせ</div>
+        </div>
+        <div style="background:var(--sand);border-radius:var(--radius-s);padding:12px;text-align:center;">
+          <div style="font-size:20px;margin-bottom:4px;">💰</div>
+          <div style="font-size:12px;font-weight:700;">料金・見積もり</div>
+          <div style="font-size:11px;color:var(--text-s);">2番目に多い</div>
+        </div>
+        <div style="background:var(--sand);border-radius:var(--radius-s);padding:12px;text-align:center;">
+          <div style="font-size:20px;margin-bottom:4px;">🐾</div>
+          <div style="font-size:12px;font-weight:700;">ペットの確認</div>
+          <div style="font-size:11px;color:var(--text-s);">当日の報告など</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SALES -->
+  <div id="page-sales" class="page">
+    <div class="metrics">
+      <div class="metric"><div class="metric-lbl">今月の売上</div><div class="metric-val" style="color:var(--green);">¥184,500</div><div class="metric-sub"><span class="up">↑ ¥19,800</span> 先月比</div></div>
+      <div class="metric"><div class="metric-lbl">今月の依頼数</div><div class="metric-val">23件</div><div class="metric-sub">平均 ¥8,022 / 件</div></div>
+      <div class="metric"><div class="metric-lbl">累計（今年）</div><div class="metric-val">¥1,024,000</div><div class="metric-sub">目標まで ¥476,000</div></div>
+      <div class="metric"><div class="metric-lbl">リピート率</div><div class="metric-val">74%</div><div class="metric-sub"><span class="up">↑ 5%</span> 先月比</div></div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-head"><div class="card-title">📊 月別売上</div></div>
+        <div class="bar-chart" id="bar-chart"></div>
+        <div style="display:flex;gap:4px;margin-top:6px;">
+          <div class="bar-wrap" style="flex:1;align-items:center;"><div class="bar-lbl">1月</div></div>
+          <div class="bar-wrap" style="flex:1;align-items:center;"><div class="bar-lbl">2月</div></div>
+          <div class="bar-wrap" style="flex:1;align-items:center;"><div class="bar-lbl">3月</div></div>
+          <div class="bar-wrap" style="flex:1;align-items:center;"><div class="bar-lbl">4月</div></div>
+          <div class="bar-wrap" style="flex:1;align-items:center;"><div class="bar-lbl">5月</div></div>
+          <div class="bar-wrap" style="flex:1;align-items:center;"><div class="bar-lbl" style="color:var(--green);font-weight:700;">6月</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">📋 サービス別内訳</div></div>
+        <div>
+          <div class="prog-row"><div class="prog-head"><span>お留守番</span><span style="font-weight:700;">¥92,000（50%）</span></div><div class="prog-bar"><div class="prog-fill" style="width:50%"></div></div></div>
+          <div class="prog-row"><div class="prog-head"><span>お泊まり</span><span style="font-weight:700;">¥56,000（30%）</span></div><div class="prog-bar"><div class="prog-fill" style="width:30%"></div></div></div>
+          <div class="prog-row"><div class="prog-head"><span>お散歩</span><span style="font-weight:700;">¥27,500（15%）</span></div><div class="prog-bar"><div class="prog-fill" style="width:15%"></div></div></div>
+          <div class="prog-row"><div class="prog-head"><span>病院付き添い</span><span style="font-weight:700;">¥9,000（5%）</span></div><div class="prog-bar"><div class="prog-fill" style="width:5%"></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REVIEWS -->
+  <div id="page-reviews" class="page">
+    <div class="two-col">
+      <div class="card">
+        <div class="card-head"><div class="card-title">⭐ 総合評価</div></div>
+        <div style="display:flex;align-items:center;gap:18px;">
+          <div style="text-align:center;"><div style="font-size:44px;font-weight:700;line-height:1;">4.9</div><div class="stars">★★★★★</div><div style="font-size:11px;color:var(--text-s);margin-top:3px;">127件</div></div>
+          <div style="flex:1;">
+            <div style="display:flex;flex-direction:column;gap:5px;">
+              <div style="display:flex;align-items:center;gap:7px;font-size:11px;"><span style="width:22px;color:var(--text-s);">5★</span><div style="flex:1;background:var(--sand-d);border-radius:3px;height:7px;overflow:hidden;"><div style="width:88%;height:100%;background:#F0A500;border-radius:3px;"></div></div><span style="width:26px;text-align:right;color:var(--text-s);">112</span></div>
+              <div style="display:flex;align-items:center;gap:7px;font-size:11px;"><span style="width:22px;color:var(--text-s);">4★</span><div style="flex:1;background:var(--sand-d);border-radius:3px;height:7px;overflow:hidden;"><div style="width:10%;height:100%;background:#F0A500;border-radius:3px;"></div></div><span style="width:26px;text-align:right;color:var(--text-s);">13</span></div>
+              <div style="display:flex;align-items:center;gap:7px;font-size:11px;"><span style="width:22px;color:var(--text-s);">3★</span><div style="flex:1;background:var(--sand-d);border-radius:3px;height:7px;overflow:hidden;"><div style="width:2%;height:100%;background:#F0A500;border-radius:3px;"></div></div><span style="width:26px;text-align:right;color:var(--text-s);">2</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">📝 返信待ち</div></div>
+        <div class="review-item">
+          <div class="review-head"><div class="review-name">山田 花子</div><div class="stars">★★★★★</div><div class="review-date">6/10</div></div>
+          <div class="review-text">ムギをとても丁寧に見てくださいました。また絶対お願いします！</div>
+          <button class="ai-btn" onclick="genReviewReply(this,'山田 花子','ムギをとても丁寧に見てくださいました。また絶対お願いします！')">✨ AI返信文を生成</button>
+        </div>
+        <div class="review-item">
+          <div class="review-head"><div class="review-name">田中 美咲</div><div class="stars">★★★★★</div><div class="review-date">6/8</div></div>
+          <div class="review-text">ハナがいつも楽しそうに散歩に行きます。信頼できます。</div>
+          <button class="ai-btn" onclick="genReviewReply(this,'田中 美咲','ハナがいつも楽しそうに散歩に行きます。信頼できます。')">✨ AI返信文を生成</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="page-settings" class="page">
+    <div class="two-col">
+      <div class="card">
+        <div class="card-head"><div class="card-title">👤 基本情報</div></div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
+          <div style="width:64px;height:64px;border-radius:50%;background:var(--green-l);display:flex;align-items:center;justify-content:center;font-size:32px;">👩</div>
+          <div><div style="font-size:16px;font-weight:700;">さおり</div><div style="font-size:12px;color:var(--text-s);">ペットシッター歴5年・小型犬&猫専門</div></div>
+        </div>
+        <div class="setting-row"><div><div class="setting-lbl">対応エリア</div></div><div class="setting-val">渋谷区・世田谷区・目黒区</div><button class="edit-btn">編集</button></div>
+        <div class="setting-row"><div><div class="setting-lbl">連絡先</div></div><div class="setting-val">saori@example.com</div><button class="edit-btn">編集</button></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">⚙️ 受付・通知設定</div></div>
+        <div class="setting-row"><div><div class="setting-lbl">新規依頼の受付</div><div class="setting-desc">オフにすると依頼が届かなくなります</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-sl"></span></label></div>
+        <div class="setting-row"><div><div class="setting-lbl">メール通知</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-sl"></span></label></div>
+        <div class="setting-row"><div><div class="setting-lbl">AI返信アシスト</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-sl"></span></label></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title">💰 料金設定</div></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+        <div><div style="font-size:12px;color:var(--text-s);margin-bottom:4px;">お留守番</div><input type="text" value="¥2,000 / 時間" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-s);padding:8px 10px;font-size:13px;font-family:inherit;"/></div>
+        <div><div style="font-size:12px;color:var(--text-s);margin-bottom:4px;">お散歩（30分）</div><input type="text" value="¥1,500" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-s);padding:8px 10px;font-size:13px;font-family:inherit;"/></div>
+        <div><div style="font-size:12px;color:var(--text-s);margin-bottom:4px;">お泊まり（1泊）</div><input type="text" value="¥8,000" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-s);padding:8px 10px;font-size:13px;font-family:inherit;"/></div>
+      </div>
+      <button class="tbtn tbtn-primary" style="margin-top:14px;">変更を保存する</button>
+    </div>
+  </div>
+</main>
+
+<!-- PET KARTE DETAIL MODAL -->
+<div class="karte-detail" id="karte-detail" onclick="if(event.target===this)closeKarte()">
+  <div class="karte-modal" id="karte-modal"></div>
+</div>
+
+<script>
+// ── DATA ──
+const BOOKINGS=[
+  {id:1,name:'山田 花子',pet:'ムギ（トイプードル・3歳）',svc:'お留守番（8h）',date:'2025/6/13',time:'10:00〜18:00',amt:16000,status:'inprogress'},
+  {id:2,name:'佐藤 美佳',pet:'チョコ（チワワ・5歳）投薬あり',svc:'お留守番',date:'2025/6/18',time:'10:00〜17:00',amt:0,status:'new'},
+  {id:3,name:'中村 健太',pet:'ソラ・リン（柴犬×2）',svc:'お泊まり（2泊）',date:'2025/6/20〜22',time:'終日',amt:0,status:'new'},
+  {id:4,name:'田中 美咲',pet:'ハナ（ポメラニアン・2歳）',svc:'お散歩',date:'2025/6/13',time:'15:00〜15:30',amt:1500,status:'confirmed'},
+  {id:5,name:'鈴木 一郎',pet:'モコ・チョコ（猫×2）',svc:'お泊まり（1泊）',date:'2025/6/13',time:'18:00〜',amt:8000,status:'confirmed'},
+  {id:6,name:'高橋 あや',pet:'プリン（マルチーズ）',svc:'お留守番（6h）',date:'2025/6/8',time:'10:00〜16:00',amt:12000,status:'done'},
+  {id:7,name:'伊藤 健太',pet:'クロ（黒猫）',svc:'病院付き添い',date:'2025/6/5',time:'14:00〜17:00',amt:9000,status:'done'},
+];
+const KARTES=[
+  {id:1,emoji:'🐩',bg:'#E8F5F0',name:'ムギ',owner:'山田 花子',ownerPhone:'090-1234-5678',ownerAddr:'東京都渋谷区代々木1-2-3 山田マンション202',breed:'トイプードル',age:'3歳',sex:'オス',weight:'4.2kg',color:'アプリコット',food:'ロイヤルカナン SAD小型犬用 100g / 1日2回（朝・夕）',med:'なし',allergy:'なし',vet:'渋谷どうぶつ病院',vaccinated:'2024/12',note:'分離不安があり、最初は不安そうにしますが慣れると甘えん坊に。散歩は20〜30分、引っ張り癖なし。',photos:['🐩','🌳'],history:[{date:'6/13',content:'お留守番8h、ご飯完食、散歩30分。写真送付済み。'},{date:'5/20',content:'お留守番6h。少し吠えたが後半は落ち着いていた。'},{date:'4/15',content:'初回。慣れるまで30分かかったが問題なし。'}],care:['ご飯（16:00）100g','水替え','散歩30分','投薬なし']},
+  {id:2,emoji:'😺',bg:'#FEF3E2',name:'チョコ',owner:'佐藤 美佳',ownerPhone:'090-2345-6789',ownerAddr:'東京都目黒区自由が丘3-4-5 佐藤ハイツ301',breed:'チワワ',age:'5歳',sex:'メス',weight:'2.5kg',color:'ブラック&タン',food:'ヒルズ プリスクリプションダイエット 50g / 1日2回（10時・17時）',med:'1日1回（朝10時）心臓の薬 ※フードに混ぜること',allergy:'鶏肉アレルギー',vet:'目黒ペットクリニック',vaccinated:'2025/1',note:'知らない人に慣れるまで時間がかかる。大きな音が苦手。投薬は必ずフードに混ぜること。',photos:['😺'],history:[{date:'6/18',content:'（次回予約）お留守番7h'},{date:'5/5',content:'お留守番5h。投薬問題なし。ごはんよく食べた。'}],care:['ご飯（10:00・17:00）50gずつ','投薬（10:00 フードに混ぜる）','水替え','散歩なし（室内のみ）']},
+  {id:3,emoji:'🐕',bg:'#E6F1FB',name:'ソラ',owner:'中村 健太',ownerPhone:'090-3456-7890',ownerAddr:'東京都世田谷区三軒茶屋2-5-8 中村ビル1F',breed:'柴犬',age:'2歳',sex:'オス',weight:'9.4kg',color:'赤柴',food:'日清ペットフード 和の究み 150g / 1日2回（朝・夕）',med:'なし',allergy:'なし',vet:'世田谷犬猫病院',vaccinated:'2025/3',note:'元気いっぱいで引っ張り癖は少ない。リンとの散歩は相性よいが、他の犬には興奮しやすい。長めの散歩が好き。',photos:['🐕','🏞️'],history:[{date:'6/20',content:'（お泊まり予約）2泊'}],care:['ご飯（7:00・18:00）150gずつ','散歩30分（朝・夕）','水替え','他の犬に注意']},
+  {id:4,emoji:'🐕',bg:'#F0EBF8',name:'リン',owner:'中村 健太',ownerPhone:'090-3456-7890',ownerAddr:'東京都世田谷区三軒茶屋2-5-8 中村ビル1F',breed:'柴犬',age:'4歳',sex:'メス',weight:'8.1kg',color:'胡麻',food:'日清ペットフード 和の究み 130g / 1日2回（朝・夕）',med:'なし',allergy:'なし',vet:'世田谷犬猫病院',vaccinated:'2025/3',note:'引っ張り癖が強いため、ハーネス使用。散歩はソラと別々に。落ち着いた性格で室内では大人しい。',photos:['🐕'],history:[{date:'6/20',content:'（お泊まり予約）2泊'}],care:['ご飯（7:00・18:00）130gずつ','散歩30分（ソラと別々）','ハーネス使用必須']},
+  {id:5,emoji:'🐈',bg:'#E8F5F0',name:'モコ',owner:'鈴木 一郎',ownerPhone:'090-4567-8901',ownerAddr:'東京都渋谷区恵比寿4-1-2 鈴木レジデンス504',breed:'スコティッシュフォールド',age:'6歳',sex:'オス（去勢済み）',weight:'4.5kg',color:'グレー',food:'ロイヤルカナン インドア 50g / 1日2回（8時・19時）',med:'なし',allergy:'なし',vet:'渋谷キャットクリニック',vaccinated:'2024/11',note:'食欲旺盛で常にごはんを欲しがる。窓側が好き。チョコ（鈴木さんのもう1匹）との関係は良好。',photos:['🐈','🪟'],history:[{date:'6/13',content:'お泊まり1泊。ごはん完食。チョコと仲良し。写真送付済み。'},{date:'4/2',content:'お留守番8h。問題なし。'}],care:['ご飯（8:00・19:00）50gずつ','水替え（常に新鮮に）','トイレ掃除（1日2回）']},
+  {id:6,emoji:'🐩',bg:'#FDEEF3',name:'ハナ',owner:'田中 美咲',ownerPhone:'090-5678-9012',ownerAddr:'東京都目黒区中目黒1-3-6 田中コーポ201',breed:'ポメラニアン',age:'2歳',sex:'メス',weight:'2.2kg',color:'クリーム',food:'ロイヤルカナン 小型犬用 40g / 1日2回（朝・夕）',med:'なし',allergy:'なし',vet:'中目黒どうぶつ病院',vaccinated:'2025/2',note:'活発で社交的。知らない人にもすぐ慣れる。フリスビーが大好き。散歩中に他の犬に吠えることがある。',photos:['🐩','🌸'],history:[{date:'6/13',content:'お散歩30分。元気いっぱい。公園で遊んだ。'},{date:'6/6',content:'お散歩30分。問題なし。'},{date:'5/30',content:'初回散歩。慣れるのが早かった。'}],care:['散歩30〜45分','帰宅後の足拭き','水補充']},
+];
+const THREADS=[
+  {name:'山田 花子',emoji:'👩',bg:'#E8F5F0',prev:'ムギはご飯も食べて元気です！安心しました😊',time:'12:30',unread:false,
+   msgs:[{sent:false,text:'こんにちは！6月13日にお留守番をお願いしたいのですが、空いていますか？',time:'昨日 10:00'},{sent:true,text:'山田さん、こんにちは！6月13日10時〜18時、承りました😊 ムギちゃんをしっかりお世話します。',time:'昨日 10:15'},{sent:false,text:'よかったです！投薬はないですが、ごはんの時間だけお願いします。',time:'昨日 10:22'},{sent:true,text:'了解です。ご飯の時間と量を教えていただければ準備します。写真も随時送りますね！',time:'昨日 10:30'},{sent:false,text:'ムギはご飯も食べて元気です！安心しました😊',time:'12:30'}]},
+  {name:'佐藤 美佳',emoji:'👩',bg:'#FDEEF3',prev:'投薬の時間について確認させてください...',time:'11:05',unread:true,
+   msgs:[{sent:false,text:'6月18日にお留守番をお願いしたいです。チョコは心臓の薬が1日1回必要です。',time:'11:00'},{sent:false,text:'投薬の時間について確認させてください...午前10時でよいでしょうか？',time:'11:05'}]},
+  {name:'中村 健太',emoji:'👨',bg:'#E6F1FB',prev:'ありがとうございます、よろしくお願いします',time:'昨日',unread:false,
+   msgs:[{sent:false,text:'6月20〜22日にお泊まりをお願いしたいです。柴犬2頭います。',time:'昨日 9:00'},{sent:true,text:'中村さん、ご連絡ありがとうございます！柴犬2頭、もちろん対応可能です。2泊で¥18,000になります。いかがでしょうか？',time:'昨日 9:30'},{sent:false,text:'ありがとうございます、よろしくお願いします',time:'昨日 9:45'}]},
+];
+const LINE_SCENARIOS=[
+  {label:'📅 空き枠の確認',text:'来週の土曜日にお留守番をお願いしたいのですが、空いていますか？トイプードル1匹、6時間くらいです。'},
+  {label:'💰 料金の問い合わせ',text:'初めてご連絡します。お留守番の料金を教えていただけますか？猫2匹です。'},
+  {label:'💊 投薬対応の確認',text:'心臓の薬を1日2回飲ませる必要があるのですが、対応していただけますか？'},
+  {label:'🐾 ケア中の報告依頼',text:'今日はどうですか？ムギのことが心配で…写真を送ってもらえると助かります。'},
+  {label:'🏠 お泊まりの相談',text:'来月の連休（3泊4日）にお泊まりをお願いしたいのですが、可能でしょうか？大型犬1匹です。'},
+  {label:'⭐ お礼メッセージ',text:'先日は本当にありがとうございました！ハナもとても楽しそうでした。またお願いしたいです。'},
+];
+const CALENDAR_EVENTS={
+  13:[{time:'10:00〜18:00',name:'山田 花子',pet:'ムギ（トイプードル）',svc:'お留守番',type:'ev-g',status:'p-inprogress'},{time:'15:00〜15:30',name:'田中 美咲',pet:'ハナ（ポメラニアン）',svc:'お散歩',type:'ev-a',status:'p-confirmed'},{time:'18:00〜',name:'鈴木 一郎',pet:'モコ・チョコ（猫×2）',svc:'お泊まり1日目',type:'ev-p',status:'p-confirmed'}],
+  14:[{time:'終日',name:'鈴木 一郎',pet:'モコ・チョコ（猫×2）',svc:'お泊まり2日目',type:'ev-p',status:'p-confirmed'}],
+  15:[{time:'〜12:00',name:'鈴木 一郎',pet:'モコ・チョコ（猫×2）',svc:'お泊まり最終日',type:'ev-p',status:'p-confirmed'}],
+  18:[{time:'10:00〜17:00',name:'佐藤 美佳',pet:'チョコ（チワワ）',svc:'お留守番',type:'ev-g',status:'p-new'}],
+  20:[{time:'終日',name:'中村 健太',pet:'ソラ・リン（柴犬×2）',svc:'お泊まり1日目',type:'ev-p',status:'p-new'}],
+  21:[{time:'終日',name:'中村 健太',pet:'ソラ・リン（柴犬×2）',svc:'お泊まり2日目',type:'ev-p',status:'p-new'}],
+  22:[{time:'〜12:00',name:'中村 健太',pet:'ソラ・リン（柴犬×2）',svc:'お泊まり最終日',type:'ev-p',status:'p-new'}],
+  25:[{time:'10:00〜16:00',name:'高橋 あや',pet:'プリン（マルチーズ）',svc:'お留守番',type:'ev-g',status:'p-confirmed'}],
+};
+const SL={new:'新規',confirmed:'確定',inprogress:'進行中',done:'完了'};
+const SC={new:'p-new',confirmed:'p-confirmed',inprogress:'p-inprogress',done:'p-done'};
+const MONTHS=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+let curThread=-1,calYear=2025,calMonth=5,selectedDay=null;
+
+// ── NAV ──
+function nav(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.getElementById('page-'+id).classList.add('on');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  else document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+id+"'"))n.classList.add('active');});
+  const T={dashboard:'ダッシュボード',calendar:'予約カレンダー',bookings:'予約管理',karte:'ペットカルテ',messages:'メッセージ',line:'LINE返信AI',sales:'売上・収益',reviews:'口コミ管理',settings:'プロフィール設定'};
+  document.getElementById('topbar-title').textContent=T[id]||'';
+  if(id==='bookings')renderBookings('all');
+  if(id==='karte')renderKarte();
+  if(id==='messages')renderThreadList();
+  if(id==='sales')renderBarChart();
+  if(id==='calendar')renderCalendar();
+  if(id==='line')renderLineScenarios();
+  closeSb();
+}
+
+// ── SIDEBAR ──
+function toggleSb(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sb-overlay').classList.toggle('on');}
+function closeSb(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sb-overlay').classList.remove('on');}
+
+// ── DASHBOARD THREADS ──
+function renderDashThreads(){
+  const el=document.getElementById('dash-threads');if(!el)return;
+  el.innerHTML=THREADS.map((t,i)=>`
+    <div onclick="nav('messages',null);setTimeout(()=>openThread(${i}),100)" style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;">
+      <div style="width:32px;height:32px;border-radius:50%;background:${t.bg};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">${t.emoji}</div>
+      <div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:700;">${t.name}</div><div style="font-size:12px;color:var(--text-s);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.prev}</div></div>
+      <div style="font-size:10px;color:var(--text-s);flex-shrink:0;">${t.time}${t.unread?'<div style="width:7px;height:7px;border-radius:50%;background:var(--pink);margin:2px 0 0 auto;"></div>':''}</div>
+    </div>`).join('');
+}
+
+// ── CALENDAR ──
+function renderCalendar(){
+  document.getElementById('cal-month-title').textContent=`${calYear}年 ${MONTHS[calMonth]}`;
+  const firstDay=new Date(calYear,calMonth,1).getDay();
+  const offset=firstDay===0?6:firstDay-1;
+  const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  const prevDays=new Date(calYear,calMonth,0).getDate();
+  const container=document.getElementById('cal-cells');
+  let html='';
+  for(let i=0;i<offset;i++){
+    const d=prevDays-offset+1+i;
+    html+=`<div class="cal-cell other-month"><div class="cal-cell-num">${d}</div></div>`;
+  }
+  for(let d=1;d<=daysInMonth;d++){
+    const isT=(calYear===2025&&calMonth===5&&d===13);
+    const isSel=selectedDay===d;
+    const evs=CALENDAR_EVENTS[d]||[];
+    let evHtml=evs.slice(0,2).map(e=>`<div class="cal-ev ${e.type}">${e.name.split(' ')[0]}</div>`).join('');
+    if(evs.length>2)evHtml+=`<div class="cal-ev" style="background:var(--sand-d);color:var(--text-s);">+${evs.length-2}件</div>`;
+    html+=`<div class="cal-cell ${isT?'today':''} ${isSel?'selected':''}" onclick="selectDay(${d})"><div class="cal-cell-num">${d}</div>${evHtml}</div>`;
+  }
+  const total=offset+daysInMonth;const rem=total%7===0?0:7-total%7;
+  for(let i=1;i<=rem;i++)html+=`<div class="cal-cell other-month"><div class="cal-cell-num">${i}</div></div>`;
+  container.style.display='contents';
+  container.innerHTML=html;
+  if(selectedDay)showDayDetail(selectedDay);
+  else document.getElementById('cal-detail').innerHTML='<div class="cal-detail-title">日付を選択すると予定が表示されます</div>';
+}
+function selectDay(d){selectedDay=d;renderCalendar();showDayDetail(d);}
+function showDayDetail(d){
+  const evs=CALENDAR_EVENTS[d]||[];
+  const detail=document.getElementById('cal-detail');
+  if(!evs.length){detail.innerHTML=`<div class="cal-detail-title">${calMonth+1}月${d}日 — 予定なし <button class="tbtn tbtn-primary" style="margin-left:10px;font-size:11px;padding:4px 12px;">予定を追加</button></div>`;return;}
+  detail.innerHTML=`<div class="cal-detail-title">${calMonth+1}月${d}日の予定（${evs.length}件）</div>`+
+    evs.map(e=>`<div class="cal-ev-item"><div class="cal-ev-time">${e.time}</div><div><div class="cal-ev-name">${e.name}</div><div class="cal-ev-sub">${e.svc} ｜ ${e.pet}</div></div><span class="pill ${e.status} cal-ev-status">${SL[e.status.replace('p-','')]||''}</span></div>`).join('');
+}
+function changeMonth(dir){
+  calMonth+=dir;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}
+  selectedDay=null;renderCalendar();
+}
+
+// ── BOOKINGS ──
+function renderBookings(f){
+  const list=f==='all'?BOOKINGS:BOOKINGS.filter(b=>b.status===f);
+  const el=document.getElementById('b-cards');
+  if(!list.length){el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text-s);">該当する予約はありません</div>';return;}
+  el.innerHTML=list.map(b=>`
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <div>
+          <div style="font-size:15px;font-weight:700;">🐾 ${b.name}</div>
+          <div style="font-size:12px;color:var(--text-s);margin-top:1px;">${b.pet}</div>
+        </div>
+        <span class="pill ${SC[b.status]}">${SL[b.status]}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">
+        <div style="background:var(--sand);border-radius:var(--radius-s);padding:7px 10px;">
+          <div style="font-size:10px;color:var(--text-s);margin-bottom:1px;">サービス</div>
+          <div style="font-size:12px;font-weight:700;">${b.svc}</div>
+        </div>
+        <div style="background:var(--sand);border-radius:var(--radius-s);padding:7px 10px;">
+          <div style="font-size:10px;color:var(--text-s);margin-bottom:1px;">金額</div>
+          <div style="font-size:13px;font-weight:700;color:var(--green);">${b.amt?'¥'+b.amt.toLocaleString():'未確定'}</div>
+        </div>
+        <div style="background:var(--sand);border-radius:var(--radius-s);padding:7px 10px;grid-column:1/-1;">
+          <div style="font-size:10px;color:var(--text-s);margin-bottom:1px;">日時</div>
+          <div style="font-size:12px;font-weight:500;">${b.date}　${b.time}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="tbtn" style="font-size:12px;padding:7px 14px;flex:1;" onclick="nav('messages',null)">💬 メッセージ</button>
+        <button class="tbtn" style="font-size:12px;padding:7px 14px;flex:1;" onclick="showInvoice('estimate','${b.name}','${b.svc}','${b.pet}')">📋 見積もり</button>
+        <button class="tbtn tbtn-primary" style="font-size:12px;padding:7px 14px;flex:1;" onclick="showInvoice('invoice','${b.name}','${b.svc}','${b.pet}')">💴 請求書</button>
+      </div>
+    </div>`).join('');
+}
+function filterB(f,btn){
+  document.querySelectorAll('[onclick^="filterB"]').forEach(b=>{b.style.background='';b.style.borderColor='';b.style.color='';b.style.fontWeight='';});
+  if(btn){btn.style.background='var(--green-l)';btn.style.borderColor='var(--green)';btn.style.color='var(--green-d)';btn.style.fontWeight='700';}
+  renderBookings(f);
+}
+
+// ── PET KARTE ──
+function renderKarte(){
+  // 顧客単位にグループ化
+  const customers={};
+  KARTES.forEach(k=>{
+    if(!customers[k.owner])customers[k.owner]={name:k.owner,pets:[],emoji:k.bg};
+    customers[k.owner].pets.push(k);
+  });
+  // 予約履歴から顧客情報を補完
+  const custList=Object.values(customers);
+  const el=document.getElementById('customer-karte-list');
+  el.innerHTML=custList.map((c,ci)=>{
+    const bookCount=BOOKINGS.filter(b=>b.name===c.name).length;
+    const lastBook=BOOKINGS.filter(b=>b.name===c.name).sort((a,b)=>b.id-a.id)[0];
+    const hasAlert=c.pets.some(p=>p.med!=='なし'||p.allergy!=='なし');
+    return `<div class="customer-card">
+      <div class="cc-header" onclick="toggleCustomer(${ci})">
+        <div class="cc-av">${c.pets[0]?.emoji||'👤'}</div>
+        <div style="flex:1;">
+          <div class="cc-name">${c.name}</div>
+          <div class="cc-meta">
+            ペット ${c.pets.length}頭 ／ 利用 ${bookCount}回
+            ${lastBook?'／ 最終: '+lastBook.date:''}
+            ${hasAlert?'<span style="margin-left:6px;font-size:10px;background:var(--amber-l);color:var(--amber);padding:1px 7px;border-radius:20px;font-weight:700;">⚠️ 要注意</span>':''}
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <button class="tbtn" style="font-size:11px;padding:4px 10px;" onclick="event.stopPropagation();showInvoice('estimate','${c.name}')">見積もり書</button>
+          <button class="tbtn tbtn-primary" style="font-size:11px;padding:4px 10px;" onclick="event.stopPropagation();showInvoice('invoice','${c.name}')">請求書</button>
+          <span style="color:var(--text-s);font-size:18px;" id="cc-arrow-${ci}">›</span>
+        </div>
+      </div>
+      <div class="cc-body" id="cc-body-${ci}">
+        <div class="pet-chips">${c.pets.map((p,pi)=>`<div class="pet-chip ${pi===0?'on':''}" onclick="switchPet(${ci},${pi})">${p.emoji} ${p.name}</div>`).join('')}</div>
+        ${c.pets.map((p,pi)=>`
+        <div class="pet-detail" id="pet-detail-${ci}-${pi}" style="${pi===0?'':'display:none;'}">
+          ${p.med!=='なし'?`<div class="med-warn">💊 <div><strong>投薬あり</strong> — ${p.med}</div></div>`:''}
+          ${p.allergy!=='なし'?`<div class="med-warn" style="background:var(--pink-l);border-color:var(--pink-m);color:var(--pink);">⚠️ <div><strong>アレルギー</strong> — ${p.allergy}</div></div>`:''}
+          <div style="font-size:11px;font-weight:700;color:var(--text-s);margin-bottom:6px;letter-spacing:.04em;">オーナー情報</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">
+            <div class="pd-item"><div class="pd-lbl">電話番号</div><div class="pd-val" style="font-size:12px;">${p.ownerPhone}</div></div>
+            <div class="pd-item pd-item--full" style="grid-column:1/-1;"><div class="pd-lbl">住所</div><div class="pd-val" style="font-size:11px;line-height:1.5;">${p.ownerAddr}</div></div>
+          </div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-s);margin-bottom:6px;letter-spacing:.04em;">ペット基本情報</div>
+          <div class="pd-grid">
+            <div class="pd-item"><div class="pd-lbl">種類</div><div class="pd-val">${p.breed}</div></div>
+            <div class="pd-item"><div class="pd-lbl">年齢・性別</div><div class="pd-val">${p.age}・${p.sex}</div></div>
+            <div class="pd-item"><div class="pd-lbl">体重</div><div class="pd-val">${p.weight}</div></div>
+            <div class="pd-item"><div class="pd-lbl">毛色</div><div class="pd-val">${p.color}</div></div>
+            <div class="pd-item"><div class="pd-lbl">ワクチン</div><div class="pd-val">${p.vaccinated}</div></div>
+            <div class="pd-item"><div class="pd-lbl">かかりつけ病院</div><div class="pd-val" style="font-size:11px;">${p.vet}</div></div>
+          </div>
+          <div class="pd-item" style="margin-bottom:10px;"><div class="pd-lbl">🍽️ フード・給餌量</div><div class="pd-val" style="font-size:12px;line-height:1.6;">${p.food}</div></div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-s);margin-bottom:6px;letter-spacing:.04em;">特記事項・性格</div>
+          <div style="font-size:12px;color:var(--text-m);line-height:1.75;background:var(--white);border-radius:var(--radius-s);padding:10px;margin-bottom:10px;">${p.note}</div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-s);margin-bottom:6px;letter-spacing:.04em;">写真ギャラリー</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+            ${p.photos.map(ph=>`<div style="width:68px;height:68px;border-radius:var(--radius-s);background:var(--white);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:30px;">${ph}</div>`).join('')}
+            <div style="width:68px;height:68px;border-radius:var(--radius-s);background:var(--white);border:1.5px dashed var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:18px;color:var(--text-s);cursor:pointer;gap:2px;" onclick="showToast('写真をアップロードします')">＋<span style="font-size:9px;">追加</span></div>
+          </div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-s);margin-bottom:6px;letter-spacing:.04em;">対応履歴</div>
+          <div class="history-list">${p.history.map(h=>`<div class="hist-item"><div class="hist-date">${h.date}</div><div>${h.content}</div></div>`).join('')}</div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleCustomer(ci){
+  const body=document.getElementById('cc-body-'+ci);
+  const arrow=document.getElementById('cc-arrow-'+ci);
+  const open=body.classList.toggle('open');
+  arrow.textContent=open?'∨':'›';
+}
+function switchPet(ci,pi){
+  const body=document.getElementById('cc-body-'+ci);
+  body.querySelectorAll('.pet-chip').forEach((c,i)=>c.classList.toggle('on',i===pi));
+  body.querySelectorAll('[id^="pet-detail-'+ci+'-"]').forEach((d,i)=>d.style.display=i===pi?'block':'none');
+}
+function openKarte(id){
+  const k=KARTES.find(x=>x.id===id);if(!k)return;
+  document.getElementById('karte-modal').innerHTML=`
+    <div class="kd-header">
+      <div class="kd-av" style="background:${k.bg};">${k.emoji}</div>
+      <div><div class="kd-name">${k.name}</div><div class="kd-owner">${k.owner}さんのペット</div></div>
+      <button class="kd-close" onclick="closeKarte()">×</button>
+    </div>
+    <div class="kd-body">
+      <div class="kd-sec">
+        <div class="kd-sec-title">基本情報</div>
+        <div class="kd-grid">
+          <div class="kd-field"><div class="kd-field-lbl">種類</div><div class="kd-field-val">${k.breed}</div></div>
+          <div class="kd-field"><div class="kd-field-lbl">年齢・性別</div><div class="kd-field-val">${k.age}・${k.sex}</div></div>
+          <div class="kd-field"><div class="kd-field-lbl">体重</div><div class="kd-field-val">${k.weight}</div></div>
+          <div class="kd-field"><div class="kd-field-lbl">毛色</div><div class="kd-field-val">${k.color}</div></div>
+          <div class="kd-field"><div class="kd-field-lbl">かかりつけ病院</div><div class="kd-field-val">${k.vet}</div></div>
+          <div class="kd-field"><div class="kd-field-lbl">最終ワクチン</div><div class="kd-field-val">${k.vaccinated}</div></div>
+        </div>
+      </div>
+      ${k.med!=='なし'?`<div class="kd-sec"><div class="kd-sec-title">投薬情報</div><div class="kd-med-alert"><span style="font-size:18px;">💊</span><div><strong>投薬あり</strong><br>${k.med}</div></div></div>`:''}
+      ${k.allergy!=='なし'?`<div class="kd-sec"><div class="kd-sec-title">アレルギー</div><div class="kd-med-alert" style="background:var(--pink-l);border-color:var(--pink-m);color:var(--pink);"><span style="font-size:18px;">⚠️</span><div><strong>アレルギーあり</strong><br>${k.allergy}</div></div></div>`:''}
+      <div class="kd-sec"><div class="kd-sec-title">特記事項・性格</div><div class="kd-note">${k.note}</div></div>
+      <div class="kd-sec">
+        <div class="kd-sec-title">今日のケアチェックリスト</div>
+        <div class="care-check" id="care-${id}">
+          ${k.care.map((c,i)=>`<div class="care-item"><div class="care-check-box" id="cb-${id}-${i}" onclick="toggleCheck(${id},${i},'${c.replace(/'/g,"\\'")}')"></div><span>${c}</span></div>`).join('')}
+        </div>
+      </div>
+      <div class="kd-sec">
+        <div class="kd-sec-title">対応履歴</div>
+        <div class="kd-history">
+          ${k.history.map(h=>`<div class="kd-hist-item"><div class="kd-hist-date">${h.date}</div><div class="kd-hist-content">${h.content}</div></div>`).join('')}
+        </div>
+      </div>
+      <div class="kd-sec">
+        <div class="kd-sec-title">写真ギャラリー</div>
+        <div class="kd-photo-grid">
+          <div class="kd-photo">${k.emoji}</div>
+          <div class="kd-photo" style="font-size:14px;color:var(--text-s);">+ 追加</div>
+          <div class="kd-photo" style="font-size:14px;color:var(--text-s);">+ 追加</div>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('karte-detail').classList.add('open');
+}
+function closeKarte(){document.getElementById('karte-detail').classList.remove('open');}
+function toggleCheck(id,i,label){
+  const cb=document.getElementById(`cb-${id}-${i}`);
+  const on=!cb.classList.contains('checked');
+  cb.classList.toggle('checked',on);
+  cb.textContent=on?'✓':'';
+  cb.nextElementSibling.style.textDecoration=on?'line-through':'';
+  cb.nextElementSibling.style.color=on?'var(--text-s)':'';
+}
+
+// ── MESSAGES ──
+function renderThreadList(){
+  const el=document.getElementById('thread-list-full');if(!el)return;
+  el.innerHTML=THREADS.map((t,i)=>`
+    <div class="thread-item ${curThread===i?'sel':''}" onclick="openThread(${i})">
+      <div class="th-av" style="background:${t.bg};">${t.emoji}</div>
+      <div class="th-body"><div class="th-name">${t.name}</div><div class="th-prev">${t.prev}</div></div>
+      <div class="th-right"><div class="th-time">${t.time}</div>${t.unread?'<div class="th-unread"></div>':''}</div>
+    </div>`).join('');
+}
+function openThread(idx){
+  curThread=idx;THREADS[idx].unread=false;renderThreadList();
+  const t=THREADS[idx];
+  const win=document.getElementById('chat-win');
+  win.className='chat-win';
+  if(window.innerWidth<=700)win.classList.add('mobile-open');
+  win.innerHTML=`
+    <div class="chat-top">
+      ${window.innerWidth<=700?`<button onclick="closeMobileChat()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text-m);">←</button>`:''}
+      <div style="width:34px;height:34px;border-radius:50%;background:${t.bg};display:flex;align-items:center;justify-content:center;font-size:18px;">${t.emoji}</div>
+      <div><div style="font-size:14px;font-weight:700;">${t.name}</div><div style="font-size:11px;color:var(--green);">● オンライン</div></div>
+      <button class="tbtn" style="margin-left:auto;font-size:12px;" onclick="nav('bookings',null)">📋 予約詳細</button>
+    </div>
+    <div class="chat-msgs" id="chat-msgs">
+      ${t.msgs.map(m=>`<div class="msg-b msg-${m.sent?'sent':'recv'}"><div class="msg-bubble">${m.text}</div><div class="msg-meta">${m.time}</div></div>`).join('')}
+    </div>
+    <div id="ai-da"></div>
+    <div class="chat-footer">
+      <div class="chat-input-row">
+        <textarea id="chat-in" rows="2" placeholder="メッセージを入力..."></textarea>
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          <button class="chat-send-btn" onclick="sendMsg(${idx})">送信</button>
+          <button class="ai-btn" onclick="genAIDraft(${idx})">✨ AI下書き</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('chat-msgs').scrollTop=9999;
+}
+function closeMobileChat(){const w=document.getElementById('chat-win');w.className='chat-win mobile-hidden';}
+function sendMsg(idx){
+  const inp=document.getElementById('chat-in');const txt=inp.value.trim();if(!txt)return;
+  THREADS[idx].msgs.push({sent:true,text:txt,time:'今'});THREADS[idx].prev=txt;inp.value='';openThread(idx);
+}
+async function genAIDraft(idx){
+  const t=THREADS[idx];const last=t.msgs.filter(m=>!m.sent).slice(-1)[0];if(!last)return;
+  const da=document.getElementById('ai-da');
+  da.innerHTML=`<div class="ai-draft-box" style="margin:0 18px 8px;"><span class="spin"></span> AI下書きを作成中...</div>`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,messages:[{role:'user',content:`ペットシッター「さおり」として、以下のお客様メッセージへの返信を80字以内で。温かく丁寧に。\nお客様:${t.name}\nメッセージ:${last.text}`}]})});
+    const data=await res.json();const reply=data.content?.[0]?.text||'';
+    da.innerHTML=`<div class="ai-draft-box" style="margin:0 18px 8px;"><span style="font-weight:700;">✨</span><span style="flex:1;">${reply}</span><button class="use-btn" onclick="useReply('${reply.replace(/'/g,"\\'")}')">使う</button></div>`;
+  }catch(e){da.innerHTML='';}
+}
+function useReply(txt){const inp=document.getElementById('chat-in');if(inp)inp.value=txt;document.getElementById('ai-da').innerHTML='';}
+
+// ── LINE AI ──
+function renderLineScenarios(){
+  document.getElementById('line-scenarios').innerHTML=LINE_SCENARIOS.map((s,i)=>
+    `<button class="line-sc-btn" onclick="selectScenario(${i})">${s.label}</button>`).join('');
+}
+function selectScenario(i){
+  document.querySelectorAll('.line-sc-btn').forEach((b,j)=>b.classList.toggle('active',j===i));
+  document.getElementById('line-input').value=LINE_SCENARIOS[i].text;
+  document.getElementById('line-recv-bubble').textContent=LINE_SCENARIOS[i].text;
+  document.getElementById('line-output-area').innerHTML='';
+  // clear sent bubble
+  const sent=document.getElementById('line-sent-msg');
+  if(sent)sent.remove();
+}
+async function genLineReply(){
+  const msg=document.getElementById('line-input').value.trim();
+  if(!msg){alert('メッセージを入力してください');return;}
+  document.getElementById('line-recv-bubble').textContent=msg;
+  const btn=document.querySelector('.line-gen-btn');
+  btn.disabled=true;btn.textContent='生成中...';
+  document.getElementById('line-output-area').innerHTML=`<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-s);"><span class="spin"></span> AIが返信文を生成中...</div>`;
+  const existSent=document.getElementById('line-sent-msg');if(existSent)existSent.remove();
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,messages:[{role:'user',content:`あなたはペットシッター「さおり」のLINEアシスタントです。以下のお客様からのLINEメッセージに対して、温かく自然な口調で120字以内の返信文を書いてください。絵文字を1〜2個使ってください。\n\nメッセージ: ${msg}`}]})});
+    const data=await res.json();const reply=data.content?.[0]?.text||'';
+    document.getElementById('line-output-area').innerHTML=`
+      <div style="font-size:11px;font-weight:700;color:var(--text-m);margin-bottom:4px;">✨ AI生成された返信文:</div>
+      <div class="line-result-box">${reply}</div>
+      <button class="line-copy-btn" onclick="copyLineReply('${reply.replace(/'/g,"\\'").replace(/\n/g,'\\n')}')">コピーする</button>`;
+    // LINEイメージに追加
+    const chat=document.getElementById('line-chat');
+    const div=document.createElement('div');
+    div.id='line-sent-msg';div.className='line-msg line-msg-sent';
+    div.innerHTML=`<div class="line-bubble">${reply}</div><div class="line-time">送信済み</div>`;
+    chat.appendChild(div);
+  }catch(e){
+    document.getElementById('line-output-area').innerHTML='<div style="font-size:12px;color:var(--pink);">エラーが発生しました。もう一度お試しください。</div>';
+  }
+  btn.disabled=false;btn.textContent='✨ 返信文を生成する';
+}
+function copyLineReply(txt){
+  navigator.clipboard.writeText(txt.replace(/\\n/g,'\n')).then(()=>{
+    const b=document.querySelector('.line-copy-btn');if(b){b.textContent='コピーしました！';setTimeout(()=>b.textContent='コピーする',2000);}
+  });
+}
+
+// ── SALES CHART ──
+function renderBarChart(){
+  const c=document.getElementById('bar-chart');if(!c)return;
+  const vals=[142000,118000,156000,138000,164700,184500];const max=Math.max(...vals);
+  c.innerHTML=vals.map((v,i)=>`<div class="bar-wrap"><div class="bar ${i===5?'cur':''}" style="height:${Math.round(v/max*100)}px;"><span class="bar-v">¥${Math.round(v/10000)}万</span></div></div>`).join('');
+}
+
+// ── AI QUOTE ──
+function genQuote(btn,name,svc,pet){
+  showInvoice('estimate',name,svc,pet);
+}
+async function genReviewReply(btn,name,text){
+  btn.textContent='生成中...';btn.disabled=true;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:400,messages:[{role:'user',content:`ペットシッター「さおり」として口コミへのオーナー返信を80字以内で。口コミ者:${name}、口コミ:${text}`}]})});
+    const data=await res.json();const reply=data.content?.[0]?.text||'';
+    const box=document.createElement('div');box.className='replied-box';
+    box.innerHTML=`<strong>AI生成返信:</strong> ${reply}<br><button class="tbtn tbtn-primary" style="margin-top:7px;font-size:11px;padding:5px 12px;" onclick="this.textContent='送信済み ✓';this.disabled=true;">返信を送る</button>`;
+    btn.replaceWith(box);
+  }catch(e){btn.textContent='✨ AI返信文を生成';btn.disabled=false;}
+}
+
+
+// ── 見積もり書・請求書 ──
+const RATES={'お留守番':2000,'お散歩':1500,'お泊まり':8000,'病院付き添い':3000};
+const TAX=0.10;
+const EXPENSE_ITEMS=[
+  {name:'交通費（往復）',amount:500},
+  {name:'鍵預かり料',amount:1000},
+  {name:'消耗品費（ケア用品）',amount:300},
+];
+const KEY_FEE=1000; // 見積もりにも鍵預かり追加する場合
+
+function showInvoice(type,customerName,svc,pet){
+  const KEY_FEE_LOCAL=1000;
+  // 顧客の直近予約を取得
+  const recentBook=BOOKINGS.filter(b=>b.name===customerName).sort((a,b)=>b.id-a.id)[0];
+  const custPets=KARTES.filter(k=>k.owner===customerName);
+  const svcName=svc||(recentBook?recentBook.svc.split('（')[0]:'お留守番');
+  const petName=pet||(custPets.length?custPets.map(p=>p.name).join('・'):'');
+  const basePrice=recentBook?recentBook.amt:(RATES[svcName]||2000)*4;
+  const medPets=custPets.filter(p=>p.med!=='なし');
+  const medFee=medPets.length*500;
+  const subtotal=basePrice+(medFee||0)+KEY_FEE_LOCAL;
+  const tax=Math.round(subtotal*TAX);
+  const total=subtotal+tax;
+  // 経費込み請求書用
+  const expenseTotal=EXPENSE_ITEMS.filter(e=>e.name!=='鍵預かり料').reduce((s,e)=>s+e.amount,0);
+  const invoiceTotal=total+expenseTotal;
+  const today=new Date();
+  const dateStr=`${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`;
+  const dueStr=`${today.getFullYear()}年${today.getMonth()+2}月${today.getDate()}日`;
+  const isEstimate=type==='estimate';
+  const docNum=isEstimate?'MR-2025-'+(Math.floor(Math.random()*900)+100):'INV-2025-'+(Math.floor(Math.random()*900)+100);
+
+  document.getElementById('inv-modal-title').textContent=isEstimate?'見積もり書':'請求書（経費込み）';
+
+  const keyFee=KEY_FEE_LOCAL;
+  const serviceRows=`
+    <tr><td>${svcName}</td><td style="text-align:center;">1式</td><td style="text-align:right;">¥${basePrice.toLocaleString()}</td></tr>
+    ${medFee?`<tr><td>投薬対応オプション（${medPets.map(p=>p.name).join('・')}）</td><td style="text-align:center;">${medPets.length}頭</td><td style="text-align:right;">¥${medFee.toLocaleString()}</td></tr>`:''}
+    <tr><td>鍵預かり料</td><td style="text-align:center;">1式</td><td style="text-align:right;">¥${keyFee.toLocaleString()}</td></tr>
+  `;
+  // 請求書のEXPENSE_ITEMSから鍵預かり料を除外（serviceRowsに含むため）
+  const filteredExpenses = EXPENSE_ITEMS.filter(e => e.name !== '鍵預かり料');
+  const expenseRows=!isEstimate?filteredExpenses.map(e=>`<tr><td>${e.name}</td><td style="text-align:center;">1式</td><td style="text-align:right;">¥${e.amount.toLocaleString()}</td></tr>`).join(''):'';
+  const finalTotal=isEstimate?total:invoiceTotal;
+  const finalSubtotal=isEstimate?subtotal:subtotal+expenseTotal;
+  const finalTax=Math.round(finalSubtotal*TAX);
+
+  document.getElementById('inv-doc-content').innerHTML=`
+    <div class="inv-doc" id="inv-printable">
+      <div class="inv-doc-header">
+        <div>
+          <div class="inv-doc-logo">🐾 さおりのペットシッター</div>
+          <div class="inv-doc-logo-sub">渋谷区・世田谷区・目黒区エリア</div>
+          <div class="inv-doc-logo-sub" style="margin-top:4px;">担当: さおり　連絡先: saori@example.com</div>
+        </div>
+        <div>
+          <div class="inv-doc-type">${isEstimate?'見 積 も り 書':'請 求 書'}</div>
+          <div class="inv-doc-num">No. ${docNum}</div>
+          <div class="inv-doc-num">発行日: ${dateStr}</div>
+          ${!isEstimate?`<div class="inv-doc-num" style="color:var(--pink);font-weight:700;">お支払期限: ${dueStr}</div>`:''}
+        </div>
+      </div>
+      <div class="inv-doc-parties">
+        <div>
+          <div class="inv-party-lbl">請求先</div>
+          <div class="inv-party-name">${customerName} 様</div>
+          <div class="inv-party-detail">ペット: ${petName||custPets.map(p=>p.name).join('・')||'—'}</div>
+        </div>
+        <div>
+          <div class="inv-party-lbl">${isEstimate?'有効期限':'サービス期間'}</div>
+          <div class="inv-party-name" style="font-size:13px;">${isEstimate?`発行日より30日間`:(recentBook?recentBook.date:'—')}</div>
+          <div class="inv-party-detail">${recentBook?recentBook.time:''}</div>
+        </div>
+      </div>
+      <table class="inv-table">
+        <thead><tr><th>内容</th><th style="text-align:center;">数量</th><th style="text-align:right;">金額</th></tr></thead>
+        <tbody>
+          ${serviceRows}
+          ${expenseRows}
+        </tbody>
+      </table>
+      <div class="inv-totals">
+        <div class="inv-total-row"><span>小計</span><span>¥${finalSubtotal.toLocaleString()}</span></div>
+        <div class="inv-total-row"><span>消費税（10%）</span><span>¥${finalTax.toLocaleString()}</span></div>
+        <div class="inv-total-row"><span>${isEstimate?'お見積もり合計':'ご請求金額'}</span><span>¥${(finalSubtotal+finalTax).toLocaleString()}</span></div>
+      </div>
+      <div class="inv-note">
+        ${isEstimate?
+          '【備考】本見積もりは発行日より30日間有効です。サービス内容・日時・ペットの状況によって変更になる場合があります。ご不明な点はLINEまたはメールでお気軽にお問い合わせください。':
+          '【お振込先】〇〇銀行 渋谷支店 普通 1234567 サオリ ペットシッター<br>【備考】お支払い確認後、領収書をお送りします。ご不明な点はLINEまたはメールでご連絡ください。'}
+      </div>
+      <div class="inv-footer">さおりのペットシッター ／ Powered by PET MERIT</div>
+    </div>`;
+
+  document.getElementById('invoice-modal').classList.add('open');
+}
+function closeInvoice(){document.getElementById('invoice-modal').classList.remove('open');}
+function printInvoice(){
+  // モーダル内の見積もり・請求書をそのままwindow.printで印刷
+  // 印刷時にモーダル以外を非表示にするスタイルを注入
+  const existing = document.getElementById('__inv_print_style__');
+  if(existing) existing.remove();
+  const st = document.createElement('style');
+  st.id = '__inv_print_style__';
+  st.textContent = [
+    '@media print{',
+    '  body > *{ display:none !important; }',
+    '  #invoice-modal{ display:block !important; position:static !important; background:none !important; padding:0 !important; }',
+    '  .invoice-wrap{ max-height:none !important; box-shadow:none !important; border:none !important; border-radius:0 !important; }',
+    '  .inv-toolbar{ display:none !important; }',
+    '  @page{ margin:12mm; size:A4; }',
+    '}'
+  ].join('');
+  document.head.appendChild(st);
+  window.print();
+  setTimeout(function(){ st.remove(); }, 2000);
+}
+
+// ── INIT ──
+renderDashThreads();
+renderBookings('all');
+</script>
+</body>
+</html>
