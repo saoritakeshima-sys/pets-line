@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/management", "destination": "/management.html" },
+    { "source": "/management-team", "destination": "/management-team.html" },
+    { "source": "/reserve", "destination": "/reserve.html" }
+  ]
+}
