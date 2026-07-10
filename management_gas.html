@@ -1,0 +1,1575 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>PET MERIT — シッター管理ダッシュボード</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style>
+:root{
+  --green:#2A7C5F;--green-d:#1A5C45;--green-l:#E8F5F0;--green-m:#9FCFBE;
+  --sand:#F7F4EE;--sand-d:#EAE5D8;--white:#FFFFFF;
+  --text:#1C1C1A;--text-m:#5C5C58;--text-s:#9C9C96;
+  --border:#E2DDD4;--radius:12px;--radius-s:8px;
+  --pink:#E05A7A;--pink-l:#FDEEF3;--pink-m:#F4C0D1;
+  --amber:#C47D1E;--amber-l:#FEF3E2;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{-webkit-text-size-adjust:100%;}
+/* iOS ズーム防止: font-size 16px以上 */
+input,select,textarea{font-size:16px;font-family:'Noto Sans JP',sans-serif;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--sand);color:var(--text);font-size:14px;line-height:1.6;display:flex;min-height:100vh;overflow-x:hidden;width:100%;max-width:100%;}
+
+/* ── SIDEBAR ── */
+.sidebar{width:220px;background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:50;transform:translateX(-100%);transition:transform .25s ease;overflow-y:auto;}
+.sidebar.open{transform:translateX(0);}
+.sb-logo{padding:18px 18px 14px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.sb-logo .logo{font-size:17px;font-weight:700;color:var(--green);}
+.sb-logo small{font-size:10px;color:var(--text-s);display:block;margin-top:1px;}
+.nav-sec{padding:12px 10px 4px;font-size:10px;font-weight:700;color:var(--text-s);letter-spacing:.06em;}
+.nav-item{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:var(--radius-s);margin:1px 6px;font-size:13px;color:var(--text-m);cursor:pointer;border:none;background:none;font-family:inherit;width:calc(100% - 12px);text-align:left;transition:background .15s,color .15s;}
+.nav-item:hover{background:var(--sand);color:var(--text);}
+.nav-item.active{background:var(--green-l);color:var(--green-d);font-weight:700;}
+.nav-item .icon{font-size:16px;width:20px;text-align:center;flex-shrink:0;}
+.nav-badge{margin-left:auto;background:var(--pink);color:var(--white);font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;}
+.sb-profile{margin-top:auto;padding:14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.sb-av{width:34px;height:34px;border-radius:50%;background:var(--green-l);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.sb-name{font-size:13px;font-weight:700;}
+.sb-status{font-size:11px;color:var(--green);}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:49;}
+.sidebar-overlay.on{display:block;}
+
+/* ── MAIN ── */
+.main{flex:1;margin-left:0;min-width:0;overflow-x:hidden;width:100%;}
+.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 16px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;}
+.topbar-left{display:flex;align-items:center;gap:10px;min-width:0;}
+.ham{background:none;border:none;cursor:pointer;font-size:22px;color:var(--text);padding:0;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;}
+.topbar-title{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+@media(max-width:380px){.topbar-title{font-size:13px;}}
+.topbar-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.tbtn{padding:6px 14px;font-size:12px;border-radius:20px;cursor:pointer;font-family:inherit;border:1px solid var(--border);background:none;color:var(--text-m);transition:border-color .15s,color .15s;}
+.tbtn:hover{border-color:var(--green);color:var(--green);}
+.tbtn-primary{background:var(--green);color:var(--white);border-color:var(--green);}
+.tbtn-primary:hover{background:var(--green-d);}
+@media(max-width:480px){.tbtn.hide-sm{display:none;}}
+
+/* ── PAGE ── */
+.page{display:none;padding:20px 16px;}
+@media(max-width:480px){.page{padding:12px;}}
+.page.on{display:block;}
+
+/* ── LAYOUT ── */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+@media(max-width:700px){.metrics{grid-template-columns:repeat(2,1fr);gap:8px;}}
+.metric{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);padding:14px 16px;}
+@media(max-width:480px){.metric{padding:10px 12px;}}
+.metric-lbl{font-size:11px;color:var(--text-s);margin-bottom:6px;font-weight:500;}
+.metric-val{font-size:22px;font-weight:700;line-height:1;}
+@media(max-width:480px){.metric-val{font-size:18px;}}
+.metric-sub{font-size:11px;color:var(--text-s);margin-top:4px;}
+.up{color:var(--green);font-weight:700;}
+.card{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);padding:16px 18px;margin-bottom:14px;}
+@media(max-width:480px){.card{padding:12px;}}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;}
+.card-title{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;}
+.card-link{font-size:12px;color:var(--green);cursor:pointer;background:none;border:none;font-family:inherit;white-space:nowrap;}
+.card-link:hover{text-decoration:underline;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+@media(max-width:700px){.two-col{grid-template-columns:1fr;}}
+.pill{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;display:inline-block;white-space:nowrap;}
+.p-new{background:var(--pink-l);color:var(--pink);}
+.p-confirmed{background:var(--green-l);color:var(--green-d);}
+.p-inprogress{background:var(--amber-l);color:var(--amber);}
+.p-done{background:var(--sand-d);color:var(--text-s);}
+.spin{width:11px;height:11px;border:2px solid var(--green-m);border-top-color:var(--green);border-radius:50%;animation:sp .8s linear infinite;display:inline-block;}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ── TIMELINE ── */
+.tl{display:flex;flex-direction:column;}
+.tl-item{display:flex;gap:10px;padding-bottom:14px;}
+.tl-item:last-child{padding-bottom:0;}
+.tl-left{display:flex;flex-direction:column;align-items:center;flex-shrink:0;}
+.tl-dot{width:9px;height:9px;border-radius:50%;background:var(--green);margin-top:3px;}
+.tl-line{flex:1;width:1px;background:var(--border);margin-top:3px;}
+.tl-item:last-child .tl-line{display:none;}
+.tl-title{font-size:13px;font-weight:700;margin-bottom:1px;}
+.tl-sub{font-size:11px;color:var(--text-s);}
+.req-card{border:1px solid var(--pink-m);border-radius:var(--radius);padding:12px;background:var(--white);margin-bottom:10px;}
+.req-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;gap:8px;}
+.req-detail{font-size:12px;color:var(--text-m);margin-bottom:10px;line-height:1.7;}
+
+/* ── CALENDAR ── */
+.cal-wrap{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;margin-bottom:14px;}
+.cal-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);}
+.cal-nav{background:none;border:1px solid var(--border);border-radius:20px;padding:6px 14px;cursor:pointer;font-size:12px;color:var(--text-m);font-family:inherit;min-height:36px;}
+.cal-nav:hover{border-color:var(--green);color:var(--green);}
+.cal-month{font-size:15px;font-weight:700;}
+.cal-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.cal-grid-full{display:grid;grid-template-columns:repeat(7,1fr);border-top:1px solid var(--border);min-width:308px;}
+.cal-dn{text-align:center;padding:7px 2px;font-size:11px;font-weight:700;color:var(--text-s);border-bottom:1px solid var(--border);background:var(--sand);}
+.cal-cell{min-height:64px;padding:5px 6px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;}
+.cal-cell:nth-child(7n){border-right:none;}
+.cal-cell:hover{background:var(--sand);}
+.cal-cell.today{background:var(--green-l);}
+.cal-cell.selected{outline:2px solid var(--green);outline-offset:-1px;background:var(--green-l);}
+.cal-cell.other-month{opacity:.35;}
+.cal-cell-num{font-size:11px;font-weight:700;margin-bottom:3px;color:var(--text);}
+.cal-cell.today .cal-cell-num{color:var(--green-d);}
+.cal-ev{font-size:9px;padding:1px 4px;border-radius:3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ev-g{background:var(--green-l);color:var(--green-d);}
+.ev-p{background:var(--pink-l);color:var(--pink);}
+.ev-a{background:var(--amber-l);color:var(--amber);}
+.cal-detail{padding:12px 16px;border-top:1px solid var(--border);background:var(--sand);}
+.cal-detail-title{font-size:12px;font-weight:700;color:var(--text-m);margin-bottom:8px;}
+.cal-ev-item{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:var(--white);border-radius:var(--radius-s);margin-bottom:6px;border:1px solid var(--border);flex-wrap:wrap;}
+.cal-ev-time{font-size:11px;font-weight:700;color:var(--green);min-width:64px;flex-shrink:0;}
+.cal-ev-name{font-size:13px;font-weight:700;}
+.cal-ev-sub{font-size:11px;color:var(--text-s);}
+.cal-ev-status{margin-left:auto;}
+
+/* ── KARTE ── */
+.customer-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:10px;}
+.cc-header{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;}
+.cc-header:hover{background:var(--sand);}
+.cc-av{width:40px;height:40px;border-radius:50%;background:var(--pink-l);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.cc-name{font-size:14px;font-weight:700;}
+.cc-meta{font-size:11px;color:var(--text-s);margin-top:1px;}
+.cc-body{padding:12px 14px;display:none;}
+.cc-body.open{display:block;}
+.pet-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.pet-chip{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;border:1px solid var(--border);background:var(--sand);cursor:pointer;font-size:12px;}
+.pet-chip.on{background:var(--pink-l);border-color:var(--pink-m);font-weight:700;}
+.pet-detail{background:var(--sand);border-radius:var(--radius-s);padding:12px;margin-bottom:10px;}
+.pd-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;}
+@media(max-width:480px){.pd-grid{grid-template-columns:1fr;}}
+.pd-item{background:var(--white);border-radius:var(--radius-s);padding:8px 10px;}
+.pd-lbl{font-size:10px;color:var(--text-s);margin-bottom:2px;}
+.pd-val{font-size:13px;font-weight:500;}
+.med-warn{background:var(--amber-l);border:1px solid #EFC06A;border-radius:var(--radius-s);padding:9px 12px;font-size:12px;color:var(--amber);display:flex;align-items:flex-start;gap:7px;margin-bottom:10px;}
+.history-list{display:flex;flex-direction:column;gap:4px;}
+.hist-item{display:flex;gap:10px;font-size:12px;padding:7px 10px;background:var(--white);border-radius:var(--radius-s);}
+.hist-date{color:var(--text-s);min-width:48px;font-weight:700;flex-shrink:0;}
+
+/* ── INVOICE MODAL ── */
+.invoice-modal{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:12px;}
+.invoice-modal.open{display:flex;}
+.invoice-wrap{background:var(--white);border-radius:var(--radius);width:100%;max-width:560px;max-height:calc(100vh - 24px);overflow-y:auto;display:flex;flex-direction:column;}
+@media(max-width:600px){.invoice-wrap{max-width:calc(100vw - 24px);}}
+.inv-toolbar{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid var(--border);background:var(--sand);flex-shrink:0;gap:8px;flex-wrap:wrap;}
+.inv-toolbar-title{font-size:14px;font-weight:700;}
+.inv-actions{display:flex;gap:8px;align-items:center;}
+.inv-btn{padding:7px 13px;font-size:12px;border-radius:20px;cursor:pointer;font-family:inherit;border:1px solid var(--border);background:var(--white);color:var(--text-m);}
+.inv-btn:hover{border-color:var(--pink);color:var(--pink);}
+.inv-btn-primary{background:var(--pink);color:var(--white);border-color:var(--pink);}
+.inv-btn-primary:hover{background:#c0496a;}
+.inv-close{background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-s);min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:50%;}
+.inv-close:hover{background:var(--sand);}
+.inv-doc-content{flex:1;overflow-y:auto;}
+.inv-doc{padding:24px 28px;}
+@media(max-width:480px){.inv-doc{padding:14px 12px;}}
+.inv-doc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:14px;border-bottom:2px solid var(--pink);flex-wrap:wrap;gap:10px;}
+.inv-doc-logo{font-size:16px;font-weight:700;color:var(--pink);}
+.inv-doc-logo-sub{font-size:11px;color:var(--text-s);margin-top:2px;}
+.inv-doc-type{font-size:20px;font-weight:700;color:var(--text);text-align:right;}
+.inv-doc-num{font-size:11px;color:var(--text-s);text-align:right;margin-top:3px;}
+.inv-doc-parties{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+@media(max-width:480px){.inv-doc-parties{grid-template-columns:1fr;}}
+.inv-party-lbl{font-size:10px;color:var(--text-s);font-weight:700;margin-bottom:4px;letter-spacing:.06em;}
+.inv-party-name{font-size:14px;font-weight:700;}
+.inv-party-detail{font-size:12px;color:var(--text-m);margin-top:2px;line-height:1.6;}
+.inv-table{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:13px;}
+.inv-table th{background:var(--sand);padding:8px 10px;text-align:left;font-size:11px;font-weight:700;color:var(--text-s);border-bottom:1px solid var(--border);}
+.inv-table td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.inv-table td:last-child,.inv-table th:last-child{text-align:right;}
+.inv-totals{margin-left:auto;width:220px;}
+@media(max-width:480px){.inv-totals{width:100%;}}
+.inv-total-row{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid var(--border);}
+.inv-total-row:last-child{border-bottom:none;font-size:15px;font-weight:700;color:var(--pink);padding-top:8px;}
+.inv-note{margin-top:16px;padding:11px;background:var(--sand);border-radius:var(--radius-s);font-size:12px;color:var(--text-m);line-height:1.7;}
+.inv-footer{margin-top:20px;padding-top:12px;border-top:1px solid var(--border);font-size:11px;color:var(--text-s);text-align:center;}
+
+/* ── KARTE DETAIL MODAL ── */
+.karte-detail{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.4);align-items:flex-start;justify-content:center;padding:12px;}
+.karte-detail.open{display:flex;}
+.karte-modal{background:var(--white);border-radius:var(--radius);width:100%;max-width:600px;max-height:calc(100vh - 24px);overflow-y:auto;margin-top:12px;}
+@media(max-width:640px){.karte-modal{max-width:calc(100vw - 24px);}}
+.kd-header{display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--border);}
+.kd-av{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
+.kd-name{font-size:18px;font-weight:700;}
+.kd-owner{font-size:12px;color:var(--text-s);}
+.kd-close{margin-left:auto;background:none;border:none;cursor:pointer;font-size:22px;color:var(--text-s);min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;}
+.kd-close:hover{background:var(--sand);}
+.kd-body{padding:18px;}
+.kd-sec{margin-bottom:18px;}
+.kd-sec-title{font-size:12px;font-weight:700;color:var(--text-s);letter-spacing:.05em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.kd-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+@media(max-width:480px){.kd-grid{grid-template-columns:1fr;}}
+.kd-field{background:var(--sand);border-radius:var(--radius-s);padding:10px 12px;}
+.kd-field-lbl{font-size:10px;color:var(--text-s);margin-bottom:3px;font-weight:700;}
+.kd-field-val{font-size:13px;font-weight:500;}
+.kd-med-alert{background:var(--amber-l);border:1px solid #EFC06A;border-radius:var(--radius-s);padding:10px 12px;font-size:13px;color:var(--amber);display:flex;align-items:flex-start;gap:8px;}
+.kd-note{background:var(--sand);border-radius:var(--radius-s);padding:10px 12px;font-size:13px;color:var(--text-m);line-height:1.7;}
+.kd-history{display:flex;flex-direction:column;gap:7px;}
+.kd-hist-item{display:flex;gap:10px;font-size:12px;padding:8px 10px;background:var(--sand);border-radius:var(--radius-s);}
+.kd-hist-date{color:var(--text-s);min-width:56px;font-weight:700;flex-shrink:0;}
+.kd-hist-content{color:var(--text-m);}
+.kd-photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.kd-photo{aspect-ratio:1;border-radius:var(--radius-s);display:flex;align-items:center;justify-content:center;font-size:30px;background:var(--sand);}
+.care-check{display:flex;flex-direction:column;gap:6px;}
+.care-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--sand);border-radius:var(--radius-s);font-size:13px;cursor:pointer;}
+.care-check-box{width:20px;height:20px;border-radius:4px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--white);}
+.care-check-box.checked{background:var(--green);border-color:var(--green);color:var(--white);}
+
+/* ── LINE DEMO ── */
+.line-demo{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:14px;}
+@media(max-width:600px){.line-demo{grid-template-columns:1fr;}}
+.line-left{background:var(--sand);padding:16px;border-right:1px solid var(--border);}
+@media(max-width:600px){.line-left{border-right:none;border-bottom:1px solid var(--border);}}
+.line-right{background:var(--white);padding:16px;}
+.line-sec-title{font-size:12px;font-weight:700;color:var(--text-m);margin-bottom:8px;}
+.line-scenario{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
+.line-sc-btn{padding:8px 12px;border-radius:var(--radius-s);border:1px solid var(--border);background:var(--white);font-size:12px;color:var(--text-m);cursor:pointer;font-family:inherit;text-align:left;transition:background .15s,border-color .15s,color .15s;}
+.line-sc-btn:hover,.line-sc-btn.active{background:var(--green-l);border-color:var(--green);color:var(--green-d);font-weight:700;}
+.line-input-area{display:flex;flex-direction:column;gap:8px;}
+.line-input-area textarea{width:100%;border:1px solid var(--border);border-radius:var(--radius-s);padding:10px;font-size:16px;font-family:inherit;color:var(--text);resize:none;min-height:80px;}
+.line-input-area textarea:focus{outline:none;border-color:var(--green);}
+.line-gen-btn{padding:10px 16px;background:var(--green);color:var(--white);border:none;border-radius:var(--radius-s);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;min-height:44px;}
+.line-gen-btn:hover{background:var(--green-d);}
+.line-gen-btn:disabled{opacity:.6;cursor:not-allowed;}
+.line-phone{background:#1E1E1E;border-radius:14px;overflow:hidden;max-width:260px;margin:0 auto;}
+.line-phone-header{background:#00B900;padding:10px 12px;display:flex;align-items:center;gap:8px;}
+.line-phone-name{font-size:13px;font-weight:700;color:#fff;}
+.line-phone-sub{font-size:10px;color:rgba(255,255,255,.7);}
+.line-chat{background:#87CEAB;padding:12px;min-height:180px;display:flex;flex-direction:column;gap:8px;}
+.line-msg{max-width:88%;}
+.line-msg-recv{align-self:flex-start;display:flex;gap:6px;}
+.line-msg-sent{align-self:flex-end;}
+.line-bubble{padding:8px 11px;border-radius:14px;font-size:12px;line-height:1.5;}
+.line-msg-recv .line-bubble{background:#fff;border-radius:4px 14px 14px 14px;}
+.line-msg-sent .line-bubble{background:#00B900;color:#fff;border-radius:14px 4px 14px 14px;}
+.line-recv-av{width:28px;height:28px;border-radius:50%;background:var(--pink-l);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.line-time{font-size:9px;color:rgba(255,255,255,.7);margin-top:2px;}
+.line-msg-recv .line-time{text-align:left;padding-left:34px;}
+.line-msg-sent .line-time{text-align:right;}
+.line-result-box{background:var(--green-l);border:1px solid var(--green-m);border-radius:var(--radius-s);padding:11px;font-size:13px;color:var(--text);line-height:1.7;margin-top:8px;white-space:pre-wrap;word-break:break-word;}
+.line-copy-btn{padding:5px 12px;font-size:11px;border:1px solid var(--green-m);border-radius:20px;background:none;color:var(--green);cursor:pointer;font-family:inherit;margin-top:6px;}
+.line-copy-btn:hover{background:var(--green-l);}
+
+/* ── SALES ── */
+.bar-chart{display:flex;align-items:flex-end;gap:6px;height:110px;padding-top:8px;}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.bar{width:100%;border-radius:4px 4px 0 0;background:var(--green-l);position:relative;min-height:4px;}
+.bar.cur{background:var(--green);}
+.bar-v{font-size:9px;color:var(--text-s);position:absolute;top:-14px;left:50%;transform:translateX(-50%);white-space:nowrap;}
+.bar-lbl{font-size:10px;color:var(--text-s);}
+.prog-row{margin-bottom:11px;}
+.prog-head{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;}
+.prog-bar{background:var(--sand-d);border-radius:4px;height:7px;overflow:hidden;}
+.prog-fill{height:100%;background:var(--green);border-radius:4px;}
+
+/* ── REVIEWS ── */
+.review-item{padding:12px 0;border-bottom:1px solid var(--border);}
+.review-item:last-child{border-bottom:none;}
+.review-head{display:flex;align-items:center;gap:8px;margin-bottom:3px;flex-wrap:wrap;}
+.review-name{font-weight:700;font-size:12px;}
+.review-date{font-size:11px;color:var(--text-s);margin-left:auto;}
+.stars{color:#F0A500;}
+.review-text{font-size:12px;color:var(--text-m);line-height:1.7;}
+.replied-box{margin-top:6px;padding:8px 10px;background:var(--green-l);border-radius:var(--radius-s);font-size:12px;color:var(--green-d);border-left:3px solid var(--green);}
+.ai-btn{padding:7px 13px;font-size:12px;border:1px solid var(--green-m);border-radius:20px;background:none;color:var(--green);cursor:pointer;font-family:inherit;margin-top:6px;min-height:36px;}
+.ai-btn:hover{background:var(--green-l);}
+
+/* ── SETTINGS ── */
+.setting-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
+.setting-row:last-child{border-bottom:none;}
+.setting-lbl{font-size:13px;font-weight:700;}
+.setting-desc{font-size:11px;color:var(--text-s);margin-top:1px;}
+.setting-val{font-size:13px;color:var(--text-m);text-align:right;flex:1;}
+.edit-btn{padding:5px 12px;font-size:11px;border:1px solid var(--border);border-radius:20px;background:none;cursor:pointer;color:var(--text-m);font-family:inherit;flex-shrink:0;min-height:36px;}
+.edit-btn:hover{border-color:var(--green);color:var(--green);}
+.toggle{position:relative;display:inline-block;width:38px;height:20px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;position:absolute;}
+.toggle-sl{position:absolute;inset:0;border-radius:20px;background:var(--border);cursor:pointer;transition:.2s;}
+.toggle-sl:before{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;top:3px;left:3px;transition:.2s;}
+.toggle input:checked+.toggle-sl{background:var(--green);}
+.toggle input:checked+.toggle-sl:before{transform:translateX(18px);}
+
+/* ── 訪問回数ラジオ（JS制御でハイライト） ── */
+.visit-label{display:flex;align-items:center;gap:8px;padding:9px 11px;border:1.5px solid var(--border);border-radius:var(--radius-s);cursor:pointer;font-size:12px;background:var(--white);transition:border-color .15s,background .15s;}
+.visit-label.selected{border-color:var(--green);background:var(--green-l);font-weight:700;color:var(--green-d);}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#222;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:700;z-index:600;transition:transform .3s;pointer-events:none;white-space:nowrap;}
+#toast.show{transform:translateX(-50%) translateY(0);}
+
+/* ── PRINT ── */
+@media print{
+  body>*{display:none !important;}
+  #invoice-modal{display:block !important;position:static !important;background:none !important;padding:0 !important;}
+  .invoice-wrap{max-height:none !important;box-shadow:none !important;border:none !important;border-radius:0 !important;display:block !important;}
+  .inv-toolbar{display:none !important;}
+  @page{margin:12mm;size:A4;}
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR OVERLAY -->
+<div class="sidebar-overlay" id="sb-overlay"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar" role="navigation" aria-label="メインメニュー">
+  <div class="sb-logo">
+    <div class="logo">PET MERIT</div>
+    <small>シッター管理ダッシュボード</small>
+  </div>
+  <div class="nav-sec">メイン</div>
+  <button type="button" class="nav-item active" id="nav-dashboard"><span class="icon">🏠</span>ダッシュボード</button>
+  <button type="button" class="nav-item" id="nav-calendar"><span class="icon">📅</span>予約カレンダー</button>
+  <button type="button" class="nav-item" id="nav-bookings"><span class="icon">📋</span>予約管理<span class="nav-badge">2</span></button>
+  <button type="button" class="nav-item" id="nav-karte"><span class="icon">🐾</span>ペットカルテ</button>
+  <button type="button" class="nav-item" id="nav-line"><span class="icon">💚</span>LINE返信AI</button>
+  <button type="button" class="nav-item" id="nav-sales"><span class="icon">💰</span>売上・収益</button>
+  <div class="nav-sec">設定</div>
+  <button type="button" class="nav-item" id="nav-reviews"><span class="icon">⭐</span>口コミ管理</button>
+  <button type="button" class="nav-item" id="nav-settings"><span class="icon">⚙️</span>プロフィール設定</button>
+  <div class="sb-profile">
+    <div class="sb-av">👩</div>
+    <div><div class="sb-name">さおり</div><div class="sb-status">● 受付中</div></div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button type="button" class="ham" id="ham-btn" aria-label="メニューを開く">☰</button>
+      <div class="topbar-title" id="topbar-title">ダッシュボード</div>
+    </div>
+    <div class="topbar-right">
+      <button type="button" class="tbtn hide-sm" id="btn-notify">🔔 通知</button>
+      <button type="button" class="tbtn tbtn-primary hide-sm" id="btn-profile-top">プロフィール</button>
+    </div>
+  </div>
+
+  <!-- ── DASHBOARD ── -->
+  <div id="page-dashboard" class="page on">
+    <div class="metrics">
+      <div class="metric"><div class="metric-lbl">今月の売上</div><div class="metric-val">¥184,500</div><div class="metric-sub"><span class="up">↑ 12%</span> 先月比</div></div>
+      <div class="metric"><div class="metric-lbl">今月の依頼数</div><div class="metric-val">23件</div><div class="metric-sub"><span class="up">↑ 4件</span> 先月比</div></div>
+      <div class="metric"><div class="metric-lbl">対応待ち</div><div class="metric-val" style="color:var(--pink);">2件</div><div class="metric-sub">見積もり未送信</div></div>
+      <div class="metric"><div class="metric-lbl">平均評価</div><div class="metric-val">4.9</div><div class="metric-sub">★ 127件</div></div>
+    </div>
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">📅 今日の予定</div>
+            <button type="button" class="card-link" id="btn-to-calendar">カレンダー →</button>
+          </div>
+          <div class="tl">
+            <div class="tl-item"><div class="tl-left"><div class="tl-dot"></div><div class="tl-line"></div></div><div><div class="tl-title">山田 花子さん — お留守番</div><div class="tl-sub">10:00〜18:00 ｜ ムギ（トイプードル）<span class="pill p-inprogress" style="margin-left:6px;">進行中</span></div></div></div>
+            <div class="tl-item"><div class="tl-left"><div class="tl-dot" style="background:var(--border);"></div><div class="tl-line"></div></div><div><div class="tl-title">田中 美咲さん — お散歩</div><div class="tl-sub">15:00〜15:30 ｜ ハナ（ポメラニアン）</div></div></div>
+            <div class="tl-item"><div class="tl-left"><div class="tl-dot" style="background:var(--border);"></div></div><div><div class="tl-title">鈴木 一郎さん — お泊まり 1日目</div><div class="tl-sub">18:00〜 ｜ モコ・チョコ（猫×2）</div></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">🆕 新着依頼</div></div>
+          <div class="req-card">
+            <div class="req-head"><div><div style="font-size:13px;font-weight:700;">佐藤 美佳さん</div><div style="font-size:11px;color:var(--text-s);">6/18（水）10:00〜17:00 ｜ お留守番</div></div><span class="pill p-new">新規</span></div>
+            <div class="req-detail">チョコ（チワワ・5歳・投薬あり1日1回）<br>特記: 分離不安あり、静かな環境希望</div>
+            <div style="display:flex;gap:7px;flex-wrap:wrap;">
+              <button type="button" class="tbtn" id="btn-reply-sato">💬 返信</button>
+              <button type="button" class="tbtn tbtn-primary" id="btn-quote-sato">✨ 見積もり生成</button>
+            </div>
+          </div>
+          <div class="req-card">
+            <div class="req-head"><div><div style="font-size:13px;font-weight:700;">中村 健太さん</div><div style="font-size:11px;color:var(--text-s);">6/20〜22 ｜ お泊まり（2泊）</div></div><span class="pill p-new">新規</span></div>
+            <div class="req-detail">ソラ・リン（柴犬×2・2歳・4歳）<br>特記: 散歩は別々。リンは引っ張り癖あり</div>
+            <div style="display:flex;gap:7px;flex-wrap:wrap;">
+              <button type="button" class="tbtn" id="btn-reply-nakamura">💬 返信</button>
+              <button type="button" class="tbtn tbtn-primary" id="btn-quote-nakamura">✨ 見積もり生成</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="background:var(--green-l);border-color:var(--green-m);">
+          <div class="card-title" style="margin-bottom:8px;">💚 LINE返信AIを試す</div>
+          <div style="font-size:12px;color:var(--text-m);margin-bottom:10px;">お客様からのLINEメッセージをAIが自動で返信文を生成します。</div>
+          <button type="button" class="tbtn tbtn-primary" id="btn-to-line">LINE返信AI を開く →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CALENDAR ── -->
+  <div id="page-calendar" class="page">
+    <div class="cal-wrap">
+      <div class="cal-header">
+        <button type="button" class="cal-nav" id="cal-prev">← 前月</button>
+        <div class="cal-month" id="cal-month-title"></div>
+        <button type="button" class="cal-nav" id="cal-next">翌月 →</button>
+      </div>
+      <div class="cal-scroll">
+        <div class="cal-grid-full">
+          <div class="cal-dn">月</div><div class="cal-dn">火</div><div class="cal-dn">水</div>
+          <div class="cal-dn">木</div><div class="cal-dn">金</div>
+          <div class="cal-dn" style="color:var(--text-s);">土</div>
+          <div class="cal-dn" style="color:var(--pink);">日</div>
+          <div id="cal-cells" style="display:contents;"></div>
+        </div>
+      </div>
+      <div class="cal-detail" id="cal-detail">
+        <div class="cal-detail-title">日付を選択すると予定が表示されます</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--text-s);margin-bottom:14px;">
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--green-l);border:1px solid var(--green-m);margin-right:4px;vertical-align:middle;"></span>お留守番</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--pink-l);border:1px solid var(--pink-m);margin-right:4px;vertical-align:middle;"></span>お泊まり</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--amber-l);border:1px solid #EFC06A;margin-right:4px;vertical-align:middle;"></span>お散歩</span>
+    </div>
+  </div>
+
+  <!-- ── BOOKINGS ── -->
+  <div id="page-bookings" class="page">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;flex-wrap:wrap;">
+      <div style="font-size:12px;color:var(--text-s);">2025年6月</div>
+      <button type="button" class="tbtn tbtn-primary" id="btn-open-add-booking" style="font-size:12px;padding:7px 14px;white-space:nowrap;">＋ 予約を追加</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;">
+      <button type="button" class="tbtn filter-btn" data-filter="month" id="bf-month" style="white-space:nowrap;flex-shrink:0;">今月（7）</button>
+      <button type="button" class="tbtn filter-btn" data-filter="new" style="white-space:nowrap;flex-shrink:0;">新規（2）</button>
+      <button type="button" class="tbtn filter-btn" data-filter="confirmed" style="white-space:nowrap;flex-shrink:0;">確定（3）</button>
+      <button type="button" class="tbtn filter-btn" data-filter="inprogress" style="white-space:nowrap;flex-shrink:0;">進行中（1）</button>
+      <button type="button" class="tbtn filter-btn" data-filter="done" style="white-space:nowrap;flex-shrink:0;">完了（1）</button>
+    </div>
+    <div id="b-cards"></div>
+
+    <!-- 予約追加フォーム -->
+    <div id="add-booking-sheet" style="display:none;background:var(--white);border:1.5px solid var(--green-m);border-radius:var(--radius);padding:18px;margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div style="font-size:14px;font-weight:700;">📋 予約を追加</div>
+        <button type="button" id="btn-close-add" aria-label="閉じる" style="background:none;border:none;cursor:pointer;font-size:22px;color:var(--text-s);min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:50%;">×</button>
+      </div>
+      <!-- STEP1 -->
+      <div id="ab-step1">
+        <div style="font-size:13px;color:var(--text-m);margin-bottom:4px;font-weight:500;">お客様名 <span style="color:var(--pink);">*</span></div>
+        <div style="margin-bottom:8px;">
+          <input type="text" id="ab-name" placeholder="山田 花子" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-s);padding:9px 11px;font-family:inherit;" autocomplete="off"/>
+        </div>
+        <div id="ab-suggest" style="display:none;border:1px solid var(--border);border-radius:var(--radius-s);overflow:hidden;margin-bottom:10px;"></div>
+        <div id="ab-karte-found" style="display:none;background:var(--green-l);border:1px solid var(--green-m);border-radius:var(--radius-s);padding:9px 12px;font-size:13px;color:var(--green-d);margin-bottom:10px;">
+          ✓ カルテから情報を自動入力しました
+        </div>
+        <button type="button" id="btn-proceed" style="width:100%;padding:11px;background:var(--green);color:#fff;border:none;border-radius:var(--radius-s);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;min-height:44px;">次へ → 予約内容を入力</button>
+      </div>
+      <!-- STEP2 -->
+      <div id="ab-step2" style="display:none;">
+        <div style="background:var(--sand);border-radius:var(--radius-s);padding:8px 12px;font-size:13px;color:var(--text-m);margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:8px;">
+          <span id="ab-name-display" style="font-weight:700;"></span>
+          <button type="button" id="btn-back-step1" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--text-s);padding:4px 8px;min-height:36px;">← 戻る</button>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:var(--text-s);letter-spacing:.05em;margin-bottom:10px;">📅 予約内容</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px;">
+          <div>
+            <div style="font-size:12px;color:var(--text-m);margin-bottom:4px;font-weight:500;">サービス</div>
+            <select id="ab-svc" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-s);padding:9px 11px;font-family:inherit;background:var(--white);">
+              <option value="お留守番">お留守番</option>
+              <option value="お泊まり">お泊まり</option>
+              <option value="お散歩">お散歩</option>
+              <option value="病院付き添い">病院付き添い</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--text-m);margin-bottom:4px;font-weight:500;">日付 <span style="color:var(--pink);">*</span></div>
+            <input type="date" id="ab-date" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-s);padding:9px 11px;font-family:inherit;"/>
+          </div>
+        </div>
+        <!-- 訪問回数（お留守番・お泊まりのみ表示） -->
+        <div id="ab-visits-section" style="margin-bottom:12px;">
+          <div style="font-size:12px;color:var(--text-m);margin-bottom:8px;font-weight:500;">🐾 1日の訪問回数 <span style="color:var(--pink);">*</span></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;" id="ab-visits-grid">
+            <label class="visit-label selected">
+              <input type="radio" name="ab-visits" value="morning" style="accent-color:var(--green);width:15px;height:15px;flex-shrink:0;" checked> 🌅 朝のみ（1回）
+            </label>
+            <label class="visit-label">
+              <input type="radio" name="ab-visits" value="morning_noon" style="accent-color:var(--green);width:15px;height:15px;flex-shrink:0;"> 🌤️ 朝・昼（2回）
+            </label>
+            <label class="visit-label">
+              <input type="radio" name="ab-visits" value="morning_evening" style="accent-color:var(--green);width:15px;height:15px;flex-shrink:0;"> 🌓 朝・夕（2回）
+            </label>
+            <label class="visit-label">
+              <input type="radio" name="ab-visits" value="morning_noon_evening" style="accent-color:var(--green);width:15px;height:15px;flex-shrink:0;"> 🌞 朝・昼・夕（3回）
+            </label>
+            <label class="visit-label" style="grid-column:1/-1;">
+              <input type="radio" name="ab-visits" value="custom" style="accent-color:var(--green);width:15px;height:15px;flex-shrink:0;"> ⏰ その他・時間指定
+            </label>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px;">
+          <div>
+            <div style="font-size:12px;color:var(--text-m);margin-bottom:4px;font-weight:500;">開始時間</div>
+            <input type="time" id="ab-stime" value="10:00" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-s);padding:9px 11px;font-family:inherit;"/>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--text-m);margin-bottom:4px;font-weight:500;">終了時間</div>
+            <input type="time" id="ab-etime" value="18:00" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-s);padding:9px 11px;font-family:inherit;"/>
+          </div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <div style="font-size:12px;color:var(--text-m);margin-bottom:4px;font-weight:500;">金額</div>
+          <input type="text" id="ab-amt" placeholder="例：16000" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-s);padding:9px 11px;font-family:inherit;"/>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:var(--text-s);letter-spacing:.05em;margin-bottom:10px;">🐾 ペット・カルテ情報</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px;">
+          <div>
+            <div style="font-size:12px;color:var(--text-m);margin-bottom:4px;font-weight:500;">ペットの名前</div>
+            <input type="text" id="ab-petname" placeholder="ムギ" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-s);padding:9px 11px;font-family:inherit;"/>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--text-m);margin-bottom:4px;font-weight:500;">種類・年齢</div>
+            <input type="text" id="ab-breed" placeholder="トイプードル・3歳" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-s);padding:9px 11px;font-family:inherit;"/>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--text-m);margin-bottom:4px;font-weight:500;">体重</div>
+            <input type="text" id="ab-weight" placeholder="4.2kg" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-s);padding:9px 11px;font-family:inherit;"/>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--text-m);margin-bottom:4px;font-weight:500;">投薬</div>
+            <input type="text" id="ab-med" placeholder="なし" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-s);padding:9px 11px;font-family:inherit;"/>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--text-m);margin-bottom:4px;font-weight:500;">電話番号</div>
+            <input type="tel" id="ab-phone" placeholder="090-xxxx-xxxx" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-s);padding:9px 11px;font-family:inherit;"/>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--text-m);margin-bottom:4px;font-weight:500;">エアコン温度</div>
+            <input type="text" id="ab-ac" placeholder="夏27℃・冬22℃" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-s);padding:9px 11px;font-family:inherit;"/>
+          </div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <div style="font-size:12px;color:var(--text-m);margin-bottom:4px;font-weight:500;">フード・給餌量</div>
+          <input type="text" id="ab-food" placeholder="ロイヤルカナン 100g / 1日2回" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-s);padding:9px 11px;font-family:inherit;"/>
+        </div>
+        <div style="margin-bottom:12px;">
+          <div style="font-size:12px;color:var(--text-m);margin-bottom:4px;font-weight:500;">住所</div>
+          <input type="text" id="ab-addr" placeholder="東京都渋谷区〇〇1-2-3" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-s);padding:9px 11px;font-family:inherit;"/>
+        </div>
+        <div style="margin-bottom:16px;">
+          <div style="font-size:12px;color:var(--text-m);margin-bottom:4px;font-weight:500;">特記事項</div>
+          <textarea id="ab-note" placeholder="性格・注意事項など" rows="2" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-s);padding:9px 11px;font-family:inherit;resize:none;"></textarea>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <button type="button" id="btn-save-only" style="width:100%;padding:11px;background:var(--sand);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;min-height:44px;">予約のみ追加する</button>
+          <button type="button" id="btn-save-karte" style="width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:var(--radius);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;min-height:44px;">予約を追加 ＋ カルテに反映する</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── KARTE ── -->
+  <div id="page-karte" class="page">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+      <div style="font-size:12px;color:var(--text-s);">お客様: <strong>5名</strong> ／ 登録ペット: <strong>6頭</strong></div>
+      <button type="button" class="tbtn tbtn-primary" id="btn-add-customer" style="min-height:44px;">＋ 顧客を追加</button>
+    </div>
+    <div id="customer-karte-list"></div>
+  </div>
+
+  <!-- ── LINE ── -->
+  <div id="page-line" class="page">
+    <div style="margin-bottom:14px;font-size:13px;color:var(--text-m);line-height:1.8;">
+      お客様からLINEで届いたメッセージを入力すると、AIがペットシッターらしい<strong>返信文を自動生成</strong>します。
+    </div>
+    <div class="line-demo">
+      <div class="line-left">
+        <div class="line-sec-title">📨 シナリオを選ぶ</div>
+        <div class="line-scenario" id="line-scenarios"></div>
+        <div class="line-sec-title" style="margin-top:12px;">✏️ または自由入力</div>
+        <div class="line-input-area">
+          <textarea id="line-input" placeholder="お客様からのLINEメッセージをここに入力..."></textarea>
+          <button type="button" class="line-gen-btn" id="btn-gen-line">✨ 返信文を生成する</button>
+        </div>
+        <div id="line-output-area" style="margin-top:10px;"></div>
+      </div>
+      <div class="line-right">
+        <div class="line-sec-title">📱 LINEイメージ</div>
+        <div class="line-phone">
+          <div class="line-phone-header">
+            <div>
+              <div class="line-phone-name">さおりのペットシッター</div>
+              <div class="line-phone-sub">公式アカウント</div>
+            </div>
+          </div>
+          <div class="line-chat" id="line-chat">
+            <div class="line-msg line-msg-recv">
+              <div class="line-recv-av">🐶</div>
+              <div><div class="line-bubble" id="line-recv-bubble">ここに受信メッセージが表示されます</div><div class="line-time">既読</div></div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:var(--text-s);text-align:center;">「生成する」を押すとAI返信文が表示されます</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title">📊 よくある質問カテゴリ</div></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+        <div style="background:var(--sand);border-radius:var(--radius-s);padding:12px;text-align:center;"><div style="font-size:20px;margin-bottom:4px;">📅</div><div style="font-size:12px;font-weight:700;">予約・空き確認</div><div style="font-size:11px;color:var(--text-s);">最多の問い合わせ</div></div>
+        <div style="background:var(--sand);border-radius:var(--radius-s);padding:12px;text-align:center;"><div style="font-size:20px;margin-bottom:4px;">💰</div><div style="font-size:12px;font-weight:700;">料金・見積もり</div><div style="font-size:11px;color:var(--text-s);">2番目に多い</div></div>
+        <div style="background:var(--sand);border-radius:var(--radius-s);padding:12px;text-align:center;"><div style="font-size:20px;margin-bottom:4px;">🐾</div><div style="font-size:12px;font-weight:700;">ペットの確認</div><div style="font-size:11px;color:var(--text-s);">当日の報告など</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SALES ── -->
+  <div id="page-sales" class="page">
+    <div class="metrics">
+      <div class="metric"><div class="metric-lbl">今月の売上</div><div class="metric-val" style="color:var(--green);">¥184,500</div><div class="metric-sub"><span class="up">↑ ¥19,800</span> 先月比</div></div>
+      <div class="metric"><div class="metric-lbl">依頼数</div><div class="metric-val">23件</div><div class="metric-sub">平均 ¥8,022/件</div></div>
+      <div class="metric"><div class="metric-lbl">累計（今年）</div><div class="metric-val">¥1,024,000</div><div class="metric-sub">目標まで ¥476,000</div></div>
+      <div class="metric"><div class="metric-lbl">リピート率</div><div class="metric-val">74%</div><div class="metric-sub"><span class="up">↑ 5%</span> 先月比</div></div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-head"><div class="card-title">📊 月別売上</div></div>
+        <div class="bar-chart" id="bar-chart"></div>
+        <div style="display:flex;gap:4px;margin-top:6px;">
+          <div class="bar-wrap"><div class="bar-lbl">1月</div></div>
+          <div class="bar-wrap"><div class="bar-lbl">2月</div></div>
+          <div class="bar-wrap"><div class="bar-lbl">3月</div></div>
+          <div class="bar-wrap"><div class="bar-lbl">4月</div></div>
+          <div class="bar-wrap"><div class="bar-lbl">5月</div></div>
+          <div class="bar-wrap"><div class="bar-lbl" style="color:var(--green);font-weight:700;">6月</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">📋 サービス別内訳</div></div>
+        <div class="prog-row"><div class="prog-head"><span>お留守番</span><span style="font-weight:700;">¥92,000（50%）</span></div><div class="prog-bar"><div class="prog-fill" style="width:50%"></div></div></div>
+        <div class="prog-row"><div class="prog-head"><span>お泊まり</span><span style="font-weight:700;">¥56,000（30%）</span></div><div class="prog-bar"><div class="prog-fill" style="width:30%"></div></div></div>
+        <div class="prog-row"><div class="prog-head"><span>お散歩</span><span style="font-weight:700;">¥27,500（15%）</span></div><div class="prog-bar"><div class="prog-fill" style="width:15%"></div></div></div>
+        <div class="prog-row"><div class="prog-head"><span>病院付き添い</span><span style="font-weight:700;">¥9,000（5%）</span></div><div class="prog-bar"><div class="prog-fill" style="width:5%"></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── REVIEWS ── -->
+  <div id="page-reviews" class="page">
+    <div class="two-col">
+      <div class="card">
+        <div class="card-head"><div class="card-title">⭐ 総合評価</div></div>
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+          <div style="text-align:center;"><div style="font-size:44px;font-weight:700;line-height:1;">4.9</div><div class="stars">★★★★★</div><div style="font-size:11px;color:var(--text-s);margin-top:3px;">127件</div></div>
+          <div style="flex:1;min-width:140px;">
+            <div style="display:flex;flex-direction:column;gap:5px;">
+              <div style="display:flex;align-items:center;gap:7px;font-size:11px;"><span style="width:22px;color:var(--text-s);">5★</span><div style="flex:1;background:var(--sand-d);border-radius:3px;height:7px;overflow:hidden;"><div style="width:88%;height:100%;background:#F0A500;border-radius:3px;"></div></div><span style="width:26px;text-align:right;color:var(--text-s);">112</span></div>
+              <div style="display:flex;align-items:center;gap:7px;font-size:11px;"><span style="width:22px;color:var(--text-s);">4★</span><div style="flex:1;background:var(--sand-d);border-radius:3px;height:7px;overflow:hidden;"><div style="width:10%;height:100%;background:#F0A500;border-radius:3px;"></div></div><span style="width:26px;text-align:right;color:var(--text-s);">13</span></div>
+              <div style="display:flex;align-items:center;gap:7px;font-size:11px;"><span style="width:22px;color:var(--text-s);">3★</span><div style="flex:1;background:var(--sand-d);border-radius:3px;height:7px;overflow:hidden;"><div style="width:2%;height:100%;background:#F0A500;border-radius:3px;"></div></div><span style="width:26px;text-align:right;color:var(--text-s);">2</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">📝 返信待ち</div></div>
+        <div class="review-item">
+          <div class="review-head"><div class="review-name">山田 花子</div><div class="stars">★★★★★</div><div class="review-date">6/10</div></div>
+          <div class="review-text">ムギをとても丁寧に見てくださいました。また絶対お願いします！</div>
+          <button type="button" class="ai-btn review-ai-btn" data-name="山田 花子" data-text="ムギをとても丁寧に見てくださいました。また絶対お願いします！">✨ AI返信文を生成</button>
+        </div>
+        <div class="review-item">
+          <div class="review-head"><div class="review-name">田中 美咲</div><div class="stars">★★★★★</div><div class="review-date">6/8</div></div>
+          <div class="review-text">ハナがいつも楽しそうに散歩に行きます。信頼できます。</div>
+          <button type="button" class="ai-btn review-ai-btn" data-name="田中 美咲" data-text="ハナがいつも楽しそうに散歩に行きます。信頼できます。">✨ AI返信文を生成</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SETTINGS ── -->
+  <div id="page-settings" class="page">
+    <div class="two-col">
+      <div class="card">
+        <div class="card-head"><div class="card-title">👤 基本情報</div></div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+          <div style="width:60px;height:60px;border-radius:50%;background:var(--green-l);display:flex;align-items:center;justify-content:center;font-size:30px;">👩</div>
+          <div><div style="font-size:16px;font-weight:700;">さおり</div><div style="font-size:12px;color:var(--text-s);">ペットシッター歴5年・小型犬&猫専門</div></div>
+        </div>
+        <div class="setting-row"><div><div class="setting-lbl">対応エリア</div></div><div class="setting-val">渋谷区・世田谷区・目黒区</div><button type="button" class="edit-btn">編集</button></div>
+        <div class="setting-row"><div><div class="setting-lbl">連絡先</div></div><div class="setting-val">saori@example.com</div><button type="button" class="edit-btn">編集</button></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">⚙️ 受付・通知設定</div></div>
+        <div class="setting-row"><div><div class="setting-lbl">新規依頼の受付</div><div class="setting-desc">オフにすると依頼が届かなくなります</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-sl"></span></label></div>
+        <div class="setting-row"><div><div class="setting-lbl">メール通知</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-sl"></span></label></div>
+        <div class="setting-row"><div><div class="setting-lbl">AI返信アシスト</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-sl"></span></label></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title">💰 料金設定</div></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+        <div><div style="font-size:12px;color:var(--text-s);margin-bottom:4px;">お留守番</div><input type="text" value="¥2,000 / 時間" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-s);padding:8px 10px;font-family:inherit;"/></div>
+        <div><div style="font-size:12px;color:var(--text-s);margin-bottom:4px;">お散歩（30分）</div><input type="text" value="¥1,500" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-s);padding:8px 10px;font-family:inherit;"/></div>
+        <div><div style="font-size:12px;color:var(--text-s);margin-bottom:4px;">お泊まり（1泊）</div><input type="text" value="¥8,000" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-s);padding:8px 10px;font-family:inherit;"/></div>
+      </div>
+      <button type="button" class="tbtn tbtn-primary" id="btn-save-settings" style="margin-top:12px;min-height:44px;">変更を保存する</button>
+    </div>
+  </div>
+</main>
+
+<!-- INVOICE MODAL -->
+<div class="invoice-modal" id="invoice-modal" role="dialog" aria-modal="true" aria-label="見積もり・請求書">
+  <div class="invoice-wrap" id="invoice-wrap">
+    <div class="inv-toolbar">
+      <div class="inv-toolbar-title" id="inv-modal-title">見積もり書</div>
+      <div class="inv-actions">
+        <button type="button" class="inv-btn inv-btn-primary" id="btn-print">🖨️ 印刷 / PDF保存</button>
+        <button type="button" class="inv-close" id="btn-close-invoice" aria-label="閉じる">×</button>
+      </div>
+    </div>
+    <div class="inv-doc-content" id="inv-doc-content"></div>
+  </div>
+</div>
+
+<!-- KARTE DETAIL MODAL -->
+<div class="karte-detail" id="karte-detail" role="dialog" aria-modal="true" aria-label="ペットカルテ詳細">
+  <div class="karte-modal" id="karte-modal"></div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+/* ═══════════════════════════════════════
+   DATA
+═══════════════════════════════════════ */
+var MOCK_DATE = new Date(2025, 5, 13); // 基準日: 2025/6/13
+
+var VISIT_OPTIONS = [
+  {value:'morning',       label:'朝のみ（1回）',    icon:'🌅'},
+  {value:'morning_noon',  label:'朝・昼（2回）',    icon:'🌤️'},
+  {value:'morning_evening',label:'朝・夕（2回）',   icon:'🌓'},
+  {value:'morning_noon_evening',label:'朝・昼・夕（3回）',icon:'🌞'},
+  {value:'custom',        label:'その他・時間指定', icon:'⏰'}
+];
+var VISITS_SHOW_FOR = ['お留守番','お泊まり'];
+
+function visitLabel(v) {
+  var o = VISIT_OPTIONS.filter(function(x){return x.value===v;})[0];
+  return o ? o.icon + ' ' + o.label : '—';
+}
+
+var BOOKINGS = [
+  {id:1,name:'山田 花子',pet:'ムギ（トイプードル・3歳）',svc:'お留守番（8h）',date:'2025/6/13',time:'10:00〜18:00',amt:16000,status:'inprogress',visits:'morning_evening'},
+  {id:2,name:'佐藤 美佳',pet:'チョコ（チワワ・5歳）投薬あり',svc:'お留守番',date:'2025/6/18',time:'10:00〜17:00',amt:0,status:'new',visits:'morning_noon_evening'},
+  {id:3,name:'中村 健太',pet:'ソラ・リン（柴犬×2）',svc:'お泊まり（2泊）',date:'2025/6/20〜22',time:'終日',amt:0,status:'new',visits:'morning_evening'},
+  {id:4,name:'田中 美咲',pet:'ハナ（ポメラニアン・2歳）',svc:'お散歩',date:'2025/6/13',time:'15:00〜15:30',amt:1500,status:'confirmed',visits:null},
+  {id:5,name:'鈴木 一郎',pet:'モコ・チョコ（猫×2）',svc:'お泊まり（1泊）',date:'2025/6/13',time:'18:00〜',amt:8000,status:'confirmed',visits:'morning_noon'},
+  {id:6,name:'高橋 あや',pet:'プリン（マルチーズ）',svc:'お留守番（6h）',date:'2025/6/8',time:'10:00〜16:00',amt:12000,status:'done',visits:'morning_evening'},
+  {id:7,name:'伊藤 健太',pet:'クロ（黒猫）',svc:'病院付き添い',date:'2025/6/5',time:'14:00〜17:00',amt:9000,status:'done',visits:null}
+];
+
+var KARTES = [
+  {id:1,emoji:'🐩',bg:'#E8F5F0',name:'ムギ',owner:'山田 花子',ownerPhone:'090-1234-5678',ownerAddr:'東京都渋谷区代々木1-2-3 山田マンション202',breed:'トイプードル',age:'3歳',sex:'オス',weight:'4.2kg',color:'アプリコット',food:'ロイヤルカナン SAD小型犬用 100g / 1日2回（朝・夕）',ac:'夏27℃・冬22℃',med:'なし',allergy:'なし',vet:'渋谷どうぶつ病院',vaccinated:'2024/12',note:'分離不安があり、最初は不安そうにしますが慣れると甘えん坊に。散歩は20〜30分、引っ張り癖なし。',photos:['🐩','🌳'],history:[{date:'6/13',content:'お留守番8h、ご飯完食、散歩30分。写真送付済み。'},{date:'5/20',content:'お留守番6h。少し吠えたが後半は落ち着いていた。'},{date:'4/15',content:'初回。慣れるまで30分かかったが問題なし。'}],care:['ご飯（16:00）100g','水替え','散歩30分','投薬なし']},
+  {id:2,emoji:'😺',bg:'#FEF3E2',name:'チョコ',owner:'佐藤 美佳',ownerPhone:'090-2345-6789',ownerAddr:'東京都目黒区自由が丘3-4-5 佐藤ハイツ301',breed:'チワワ',age:'5歳',sex:'メス',weight:'2.5kg',color:'ブラック&タン',food:'ヒルズ プリスクリプションダイエット 50g / 1日2回（10時・17時）',ac:'夏26℃・冬23℃',med:'1日1回（朝10時）心臓の薬 ※フードに混ぜること',allergy:'鶏肉アレルギー',vet:'目黒ペットクリニック',vaccinated:'2025/1',note:'知らない人に慣れるまで時間がかかる。大きな音が苦手。投薬は必ずフードに混ぜること。',photos:['😺'],history:[{date:'6/18',content:'（次回予約）お留守番7h'},{date:'5/5',content:'お留守番5h。投薬問題なし。ごはんよく食べた。'}],care:['ご飯（10:00・17:00）50gずつ','投薬（10:00 フードに混ぜる）','水替え','散歩なし（室内のみ）']},
+  {id:3,emoji:'🐕',bg:'#E6F1FB',name:'ソラ',owner:'中村 健太',ownerPhone:'090-3456-7890',ownerAddr:'東京都世田谷区三軒茶屋2-5-8 中村ビル1F',breed:'柴犬',age:'2歳',sex:'オス',weight:'9.4kg',color:'赤柴',food:'日清ペットフード 和の究み 150g / 1日2回（朝・夕）',ac:'夏26℃・冬22℃',med:'なし',allergy:'なし',vet:'世田谷犬猫病院',vaccinated:'2025/3',note:'元気いっぱいで引っ張り癖は少ない。リンとの散歩は相性よいが、他の犬には興奮しやすい。長めの散歩が好き。',photos:['🐕','🏞️'],history:[{date:'6/20',content:'（お泊まり予約）2泊'}],care:['ご飯（7:00・18:00）150gずつ','散歩30分（朝・夕）','水替え','他の犬に注意']},
+  {id:4,emoji:'🐕',bg:'#F0EBF8',name:'リン',owner:'中村 健太',ownerPhone:'090-3456-7890',ownerAddr:'東京都世田谷区三軒茶屋2-5-8 中村ビル1F',breed:'柴犬',age:'4歳',sex:'メス',weight:'8.1kg',color:'胡麻',food:'日清ペットフード 和の究み 130g / 1日2回（朝・夕）',ac:'夏26℃・冬22℃',med:'なし',allergy:'なし',vet:'世田谷犬猫病院',vaccinated:'2025/3',note:'引っ張り癖が強いため、ハーネス使用。散歩はソラと別々に。落ち着いた性格で室内では大人しい。',photos:['🐕'],history:[{date:'6/20',content:'（お泊まり予約）2泊'}],care:['ご飯（7:00・18:00）130gずつ','散歩30分（ソラと別々）','ハーネス使用必須']},
+  {id:5,emoji:'🐈',bg:'#E8F5F0',name:'モコ',owner:'鈴木 一郎',ownerPhone:'090-4567-8901',ownerAddr:'東京都渋谷区恵比寿4-1-2 鈴木レジデンス504',breed:'スコティッシュフォールド',age:'6歳',sex:'オス（去勢済み）',weight:'4.5kg',color:'グレー',food:'ロイヤルカナン インドア 50g / 1日2回（8時・19時）',ac:'夏26℃・冬23℃（猫は寒さが苦手）',med:'なし',allergy:'なし',vet:'渋谷キャットクリニック',vaccinated:'2024/11',note:'食欲旺盛で常にごはんを欲しがる。窓側が好き。チョコとの関係は良好。',photos:['🐈','🪟'],history:[{date:'6/13',content:'お泊まり1泊。ごはん完食。チョコと仲良し。写真送付済み。'},{date:'4/2',content:'お留守番8h。問題なし。'}],care:['ご飯（8:00・19:00）50gずつ','水替え（常に新鮮に）','トイレ掃除（1日2回）']},
+  {id:6,emoji:'🐩',bg:'#FDEEF3',name:'ハナ',owner:'田中 美咲',ownerPhone:'090-5678-9012',ownerAddr:'東京都目黒区中目黒1-3-6 田中コーポ201',breed:'ポメラニアン',age:'2歳',sex:'メス',weight:'2.2kg',color:'クリーム',food:'ロイヤルカナン 小型犬用 40g / 1日2回（朝・夕）',ac:'夏27℃・冬22℃',med:'なし',allergy:'なし',vet:'中目黒どうぶつ病院',vaccinated:'2025/2',note:'活発で社交的。知らない人にもすぐ慣れる。フリスビーが大好き。散歩中に他の犬に吠えることがある。',photos:['🐩','🌸'],history:[{date:'6/13',content:'お散歩30分。元気いっぱい。公園で遊んだ。'},{date:'6/6',content:'お散歩30分。問題なし。'},{date:'5/30',content:'初回散歩。慣れるのが早かった。'}],care:['散歩30〜45分','帰宅後の足拭き','水補充']}
+];
+
+var CALENDAR_EVENTS = {
+  13:[{time:'10:00〜18:00',name:'山田 花子',pet:'ムギ（トイプードル）',svc:'お留守番',type:'ev-g',status:'p-inprogress'},{time:'15:00〜15:30',name:'田中 美咲',pet:'ハナ（ポメラニアン）',svc:'お散歩',type:'ev-a',status:'p-confirmed'},{time:'18:00〜',name:'鈴木 一郎',pet:'モコ・チョコ（猫×2）',svc:'お泊まり1日目',type:'ev-p',status:'p-confirmed'}],
+  14:[{time:'終日',name:'鈴木 一郎',pet:'モコ・チョコ（猫×2）',svc:'お泊まり2日目',type:'ev-p',status:'p-confirmed'}],
+  15:[{time:'〜12:00',name:'鈴木 一郎',pet:'モコ・チョコ（猫×2）',svc:'お泊まり最終日',type:'ev-p',status:'p-confirmed'}],
+  18:[{time:'10:00〜17:00',name:'佐藤 美佳',pet:'チョコ（チワワ）',svc:'お留守番',type:'ev-g',status:'p-new'}],
+  20:[{time:'終日',name:'中村 健太',pet:'ソラ・リン（柴犬×2）',svc:'お泊まり1日目',type:'ev-p',status:'p-new'}],
+  21:[{time:'終日',name:'中村 健太',pet:'ソラ・リン（柴犬×2）',svc:'お泊まり2日目',type:'ev-p',status:'p-new'}],
+  22:[{time:'〜12:00',name:'中村 健太',pet:'ソラ・リン（柴犬×2）',svc:'お泊まり最終日',type:'ev-p',status:'p-new'}],
+  25:[{time:'10:00〜16:00',name:'高橋 あや',pet:'プリン（マルチーズ）',svc:'お留守番',type:'ev-g',status:'p-confirmed'}]
+};
+
+var SL = {new:'新規',confirmed:'確定',inprogress:'進行中',done:'完了'};
+var SC = {new:'p-new',confirmed:'p-confirmed',inprogress:'p-inprogress',done:'p-done'};
+var MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+var calYear = MOCK_DATE.getFullYear();
+var calMonth = MOCK_DATE.getMonth();
+var selectedDay = null;
+
+/* ═══════════════════════════════════════
+   TOAST
+═══════════════════════════════════════ */
+var toastTimer = null;
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 2800);
+}
+
+/* ═══════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════ */
+var PAGE_TITLES = {
+  dashboard:'ダッシュボード', calendar:'予約カレンダー', bookings:'予約管理',
+  karte:'ペットカルテ', line:'LINE返信AI', sales:'売上・収益',
+  reviews:'口コミ管理', settings:'プロフィール設定'
+};
+
+function nav(id) {
+  // ページ切替
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('on'); });
+  var page = document.getElementById('page-' + id);
+  if (page) page.classList.add('on');
+  // ナビハイライト
+  document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
+  var navBtn = document.getElementById('nav-' + id);
+  if (navBtn) navBtn.classList.add('active');
+  // タイトル
+  var titleEl = document.getElementById('topbar-title');
+  if (titleEl) titleEl.textContent = PAGE_TITLES[id] || '';
+  // 各ページ初期化
+  if (id === 'bookings') renderBookings('month');
+  if (id === 'karte') renderKarte();
+  if (id === 'sales') renderBarChart();
+  if (id === 'calendar') renderCalendar();
+  if (id === 'line') renderLineScenarios();
+  // サイドバーを閉じる
+  closeSb();
+}
+
+/* ═══════════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════════ */
+function toggleSb() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sb-overlay').classList.toggle('on');
+}
+function closeSb() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sb-overlay').classList.remove('on');
+}
+
+// サイドバーナビボタン
+document.getElementById('nav-dashboard').addEventListener('click', function(){ nav('dashboard'); });
+document.getElementById('nav-calendar').addEventListener('click', function(){ nav('calendar'); });
+document.getElementById('nav-bookings').addEventListener('click', function(){ nav('bookings'); });
+document.getElementById('nav-karte').addEventListener('click', function(){ nav('karte'); });
+document.getElementById('nav-line').addEventListener('click', function(){ nav('line'); });
+document.getElementById('nav-sales').addEventListener('click', function(){ nav('sales'); });
+document.getElementById('nav-reviews').addEventListener('click', function(){ nav('reviews'); });
+document.getElementById('nav-settings').addEventListener('click', function(){ nav('settings'); });
+
+// ハンバーガー・オーバーレイ
+document.getElementById('ham-btn').addEventListener('click', toggleSb);
+document.getElementById('sb-overlay').addEventListener('click', closeSb);
+
+// トップバーボタン
+document.getElementById('btn-notify').addEventListener('click', function(){ nav('bookings'); });
+document.getElementById('btn-profile-top').addEventListener('click', function(){ nav('settings'); });
+
+// ダッシュボードのボタン
+document.getElementById('btn-to-calendar').addEventListener('click', function(){ nav('calendar'); });
+document.getElementById('btn-to-line').addEventListener('click', function(){ nav('line'); });
+document.getElementById('btn-reply-sato').addEventListener('click', function(){ nav('line'); });
+document.getElementById('btn-reply-nakamura').addEventListener('click', function(){ nav('line'); });
+document.getElementById('btn-quote-sato').addEventListener('click', function(){ showInvoice('estimate','佐藤 美佳','お留守番','チョコ（チワワ）'); });
+document.getElementById('btn-quote-nakamura').addEventListener('click', function(){ showInvoice('estimate','中村 健太','お泊まり（2泊）','ソラ・リン（柴犬×2）'); });
+
+// カレンダーナビ
+document.getElementById('cal-prev').addEventListener('click', function(){ changeMonth(-1); });
+document.getElementById('cal-next').addEventListener('click', function(){ changeMonth(1); });
+
+// 予約追加
+document.getElementById('btn-open-add-booking').addEventListener('click', openAddBooking);
+document.getElementById('btn-close-add').addEventListener('click', closeAddBooking);
+document.getElementById('btn-proceed').addEventListener('click', proceedToDetail);
+document.getElementById('btn-back-step1').addEventListener('click', backToStep1);
+document.getElementById('btn-save-only').addEventListener('click', function(){ saveAddBooking(false); });
+document.getElementById('btn-save-karte').addEventListener('click', function(){ saveAddBooking(true); });
+document.getElementById('ab-name').addEventListener('input', onAbNameInput);
+document.getElementById('ab-svc').addEventListener('change', onSvcChange);
+
+// 訪問回数ラジオのハイライト（:has()非対応ブラウザ対応）
+document.querySelectorAll('input[name="ab-visits"]').forEach(function(radio) {
+  radio.addEventListener('change', function() {
+    document.querySelectorAll('#ab-visits-grid .visit-label').forEach(function(lbl){
+      lbl.classList.remove('selected');
+    });
+    if (radio.parentNode && radio.parentNode.classList) {
+      radio.parentNode.classList.add('selected');
+    }
+  });
+});
+
+// Invoice
+document.getElementById('btn-close-invoice').addEventListener('click', closeInvoice);
+document.getElementById('btn-print').addEventListener('click', function(){ window.print(); });
+document.getElementById('invoice-modal').addEventListener('click', function(e){
+  if (e.target === document.getElementById('invoice-modal')) closeInvoice();
+});
+
+// Karte詳細モーダル背景クリックで閉じる
+document.getElementById('karte-detail').addEventListener('click', function(e){
+  if (e.target === document.getElementById('karte-detail')) closeKarte();
+});
+
+// ESCキー
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeInvoice();
+    closeKarte();
+    closeAddBooking();
+    closeSb();
+  }
+});
+
+// 顧客追加ボタン（モック）
+document.getElementById('btn-add-customer').addEventListener('click', function(){
+  showToast('この機能は準備中です');
+});
+// 設定保存ボタン（モック）
+document.getElementById('btn-save-settings').addEventListener('click', function(){
+  showToast('保存しました（モック）');
+});
+
+/* ═══════════════════════════════════════
+   CALENDAR
+═══════════════════════════════════════ */
+function renderCalendar() {
+  document.getElementById('cal-month-title').textContent = calYear + '年 ' + MONTHS[calMonth];
+  var firstDay = new Date(calYear, calMonth, 1).getDay();
+  var offset = firstDay === 0 ? 6 : firstDay - 1;
+  var daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  var prevDays = new Date(calYear, calMonth, 0).getDate();
+  var container = document.getElementById('cal-cells');
+  var html = '';
+  for (var i = 0; i < offset; i++) {
+    var d0 = prevDays - offset + 1 + i;
+    html += '<div class="cal-cell other-month"><div class="cal-cell-num">' + d0 + '</div></div>';
+  }
+  for (var d = 1; d <= daysInMonth; d++) {
+    var isT = (calYear === MOCK_DATE.getFullYear() && calMonth === MOCK_DATE.getMonth() && d === MOCK_DATE.getDate());
+    var isSel = selectedDay === d;
+    var evs = CALENDAR_EVENTS[d] || [];
+    var evHtml = '';
+    for (var ei = 0; ei < Math.min(2, evs.length); ei++) {
+      evHtml += '<div class="cal-ev ' + evs[ei].type + '">' + evs[ei].name.split(' ')[0] + '</div>';
+    }
+    if (evs.length > 2) evHtml += '<div class="cal-ev" style="background:var(--sand-d);color:var(--text-s);">+' + (evs.length-2) + '件</div>';
+    html += '<div class="cal-cell' + (isT?' today':'') + (isSel?' selected':'') + '" data-day="' + d + '"><div class="cal-cell-num">' + d + '</div>' + evHtml + '</div>';
+  }
+  var total = offset + daysInMonth;
+  var rem = total % 7 === 0 ? 0 : 7 - total % 7;
+  for (var j = 1; j <= rem; j++) {
+    html += '<div class="cal-cell other-month"><div class="cal-cell-num">' + j + '</div></div>';
+  }
+  container.innerHTML = html;
+  // セルクリックイベント
+  container.querySelectorAll('.cal-cell:not(.other-month)').forEach(function(cell){
+    cell.addEventListener('click', function(){
+      selectedDay = parseInt(cell.getAttribute('data-day'));
+      renderCalendar();
+      showDayDetail(selectedDay);
+    });
+  });
+  if (selectedDay) showDayDetail(selectedDay);
+  else document.getElementById('cal-detail').innerHTML = '<div class="cal-detail-title">日付を選択すると予定が表示されます</div>';
+}
+
+function showDayDetail(d) {
+  var evs = CALENDAR_EVENTS[d] || [];
+  var detail = document.getElementById('cal-detail');
+  if (!evs.length) {
+    detail.innerHTML = '<div class="cal-detail-title">' + (calMonth+1) + '月' + d + '日 — 予定なし</div>';
+    return;
+  }
+  var html = '<div class="cal-detail-title">' + (calMonth+1) + '月' + d + '日の予定（' + evs.length + '件）</div>';
+  for (var i = 0; i < evs.length; i++) {
+    var e = evs[i];
+    var statusLabel = SL[e.status.replace('p-','')] || '';
+    html += '<div class="cal-ev-item"><div class="cal-ev-time">' + e.time + '</div><div><div class="cal-ev-name">' + e.name + '</div><div class="cal-ev-sub">' + e.svc + ' ｜ ' + e.pet + '</div></div><span class="pill ' + e.status + ' cal-ev-status">' + statusLabel + '</span></div>';
+  }
+  detail.innerHTML = html;
+}
+
+function changeMonth(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  selectedDay = null;
+  renderCalendar();
+}
+
+/* ═══════════════════════════════════════
+   BOOKINGS
+═══════════════════════════════════════ */
+function renderBookings(f) {
+  var list = f === 'month' ? BOOKINGS : BOOKINGS.filter(function(b){ return b.status === f; });
+  var el = document.getElementById('b-cards');
+  if (!list.length) {
+    el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-s);">該当する予約はありません</div>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < list.length; i++) {
+    var b = list[i];
+    var hasPet = KARTES.some(function(k){ return k.owner === b.name; });
+    var showVisits = b.visits && VISITS_SHOW_FOR.some(function(s){ return b.svc.indexOf(s) !== -1; });
+    var visitsHtml = showVisits ? '<div style="background:var(--green-l);border-radius:var(--radius-s);padding:7px 10px;border:1px solid var(--green-m);"><div style="font-size:10px;color:var(--green-d);margin-bottom:1px;font-weight:700;">🐾 訪問回数</div><div style="font-size:11px;font-weight:700;color:var(--green-d);">' + visitLabel(b.visits) + '</div></div>' : '';
+    var dateColSpan = showVisits ? '' : 'grid-column:1/-1;';
+    var karteBtn = hasPet ? '<button type="button" class="tbtn karte-link-btn" data-owner="' + esc(b.name) + '" style="font-size:12px;padding:7px 14px;">🐾 カルテを見る</button>' : '';
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px;">' +
+        '<div><div style="font-size:15px;font-weight:700;">🐾 ' + esc(b.name) + '</div><div style="font-size:12px;color:var(--text-s);margin-top:1px;">' + esc(b.pet) + '</div></div>' +
+        '<span class="pill ' + SC[b.status] + '">' + SL[b.status] + '</span>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">' +
+        '<div style="background:var(--sand);border-radius:var(--radius-s);padding:7px 10px;"><div style="font-size:10px;color:var(--text-s);margin-bottom:1px;">サービス</div><div style="font-size:12px;font-weight:700;">' + esc(b.svc) + '</div></div>' +
+        '<div style="background:var(--sand);border-radius:var(--radius-s);padding:7px 10px;"><div style="font-size:10px;color:var(--text-s);margin-bottom:1px;">金額</div><div style="font-size:13px;font-weight:700;color:var(--green);">' + (b.amt ? '¥' + b.amt.toLocaleString() : '未確定') + '</div></div>' +
+        '<div style="background:var(--sand);border-radius:var(--radius-s);padding:7px 10px;' + dateColSpan + '"><div style="font-size:10px;color:var(--text-s);margin-bottom:1px;">日時</div><div style="font-size:12px;font-weight:500;">' + esc(b.date) + '　' + esc(b.time) + '</div></div>' +
+        visitsHtml +
+      '</div>' +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
+        karteBtn +
+        '<button type="button" class="tbtn invoice-btn" data-type="estimate" data-name="' + esc(b.name) + '" data-svc="' + esc(b.svc) + '" data-pet="' + esc(b.pet) + '" style="font-size:12px;padding:7px 14px;flex:1;min-height:36px;">📋 見積もり</button>' +
+        '<button type="button" class="tbtn tbtn-primary invoice-btn" data-type="invoice" data-name="' + esc(b.name) + '" data-svc="' + esc(b.svc) + '" data-pet="' + esc(b.pet) + '" style="font-size:12px;padding:7px 14px;flex:1;min-height:36px;">💴 請求書</button>' +
+      '</div>' +
+    '</div>';
+  }
+  el.innerHTML = html;
+  // イベント委譲
+  el.querySelectorAll('.karte-link-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var owner = btn.getAttribute('data-owner');
+      nav('karte');
+      setTimeout(function(){ openKarteByOwner(owner); }, 200);
+    });
+  });
+  el.querySelectorAll('.invoice-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      showInvoice(btn.getAttribute('data-type'), btn.getAttribute('data-name'), btn.getAttribute('data-svc'), btn.getAttribute('data-pet'));
+    });
+  });
+}
+
+// フィルターボタン
+document.querySelectorAll('.filter-btn').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    document.querySelectorAll('.filter-btn').forEach(function(b){
+      b.style.background = ''; b.style.borderColor = ''; b.style.color = ''; b.style.fontWeight = '';
+    });
+    btn.style.background = 'var(--green-l)';
+    btn.style.borderColor = 'var(--green)';
+    btn.style.color = 'var(--green-d)';
+    btn.style.fontWeight = '700';
+    renderBookings(btn.getAttribute('data-filter'));
+  });
+});
+
+/* ═══════════════════════════════════════
+   予約追加フォーム
+═══════════════════════════════════════ */
+function openAddBooking() {
+  var s = document.getElementById('add-booking-sheet');
+  if (s.style.display === 'block') { closeAddBooking(); return; }
+  document.getElementById('ab-name').value = '';
+  document.getElementById('ab-name').style.borderColor = '';
+  document.getElementById('ab-karte-found').style.display = 'none';
+  document.getElementById('ab-suggest').style.display = 'none';
+  document.getElementById('ab-step1').style.display = 'block';
+  document.getElementById('ab-step2').style.display = 'none';
+  s.style.display = 'block';
+  setTimeout(function(){ s.scrollIntoView({behavior:'smooth',block:'start'}); }, 50);
+}
+function closeAddBooking() {
+  document.getElementById('add-booking-sheet').style.display = 'none';
+}
+function onSvcChange() {
+  var svc = document.getElementById('ab-svc').value;
+  var sec = document.getElementById('ab-visits-section');
+  sec.style.display = VISITS_SHOW_FOR.indexOf(svc) !== -1 ? 'block' : 'none';
+}
+function onAbNameInput() {
+  var val = document.getElementById('ab-name').value.trim();
+  var sug = document.getElementById('ab-suggest');
+  if (!val) { sug.style.display = 'none'; return; }
+  var matches = [];
+  KARTES.forEach(function(k){
+    if (k.owner.indexOf(val) !== -1 && matches.indexOf(k.owner) === -1) matches.push(k.owner);
+  });
+  if (!matches.length) { sug.style.display = 'none'; return; }
+  sug.style.display = 'block';
+  var html = '';
+  for (var i = 0; i < matches.length; i++) {
+    html += '<div class="sug-item" data-name="' + esc(matches[i]) + '" style="padding:9px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);">' + esc(matches[i]) + ' <span style="font-size:11px;color:var(--text-s);">（カルテあり）</span></div>';
+  }
+  sug.innerHTML = html;
+  sug.querySelectorAll('.sug-item').forEach(function(item){
+    item.addEventListener('mouseenter', function(){ item.style.background='var(--green-l)'; });
+    item.addEventListener('mouseleave', function(){ item.style.background=''; });
+    item.addEventListener('click', function(){
+      document.getElementById('ab-name').value = item.getAttribute('data-name');
+      sug.style.display = 'none';
+      fillFromKarte(item.getAttribute('data-name'));
+    });
+  });
+}
+function fillFromKarte(name) {
+  var pets = KARTES.filter(function(k){ return k.owner === name; });
+  if (!pets.length) { document.getElementById('ab-karte-found').style.display = 'none'; return; }
+  var p = pets[0];
+  document.getElementById('ab-petname').value = pets.map(function(x){return x.name;}).join('・');
+  document.getElementById('ab-breed').value = p.breed + '・' + p.age;
+  document.getElementById('ab-weight').value = p.weight;
+  document.getElementById('ab-med').value = p.med;
+  document.getElementById('ab-phone').value = p.ownerPhone || '';
+  document.getElementById('ab-addr').value = p.ownerAddr || '';
+  document.getElementById('ab-food').value = p.food || '';
+  document.getElementById('ab-ac').value = p.ac || '';
+  document.getElementById('ab-note').value = p.note || '';
+  document.getElementById('ab-karte-found').style.display = 'block';
+}
+function proceedToDetail() {
+  var name = document.getElementById('ab-name').value.trim();
+  if (!name) {
+    document.getElementById('ab-name').style.borderColor = 'var(--pink)';
+    document.getElementById('ab-name').focus();
+    return;
+  }
+  document.getElementById('ab-name').style.borderColor = '';
+  fillFromKarte(name);
+  document.getElementById('ab-step1').style.display = 'none';
+  document.getElementById('ab-step2').style.display = 'block';
+  document.getElementById('ab-name-display').textContent = name + ' 様';
+  // 日付をMOCK_DATEで設定
+  var y = MOCK_DATE.getFullYear();
+  var m = String(MOCK_DATE.getMonth()+1).padStart(2,'0');
+  var d = String(MOCK_DATE.getDate()).padStart(2,'0');
+  document.getElementById('ab-date').value = y + '-' + m + '-' + d;
+  onSvcChange();
+}
+function backToStep1() {
+  document.getElementById('ab-step1').style.display = 'block';
+  document.getElementById('ab-step2').style.display = 'none';
+}
+function saveAddBooking(withKarte) {
+  var name = document.getElementById('ab-name').value.trim();
+  var date = document.getElementById('ab-date').value;
+  if (!date) { showToast('日付を入力してください'); return; }
+  var svc = document.getElementById('ab-svc').value;
+  var stime = document.getElementById('ab-stime').value;
+  var etime = document.getElementById('ab-etime').value;
+  var amtStr = document.getElementById('ab-amt').value.replace(/[¥,]/g, '');
+  var amt = parseInt(amtStr, 10) || 0;
+  var petname = document.getElementById('ab-petname').value;
+  var breed = document.getElementById('ab-breed').value;
+  var visitsEl = document.querySelector('input[name="ab-visits"]:checked');
+  var visits = (VISITS_SHOW_FOR.indexOf(svc) !== -1 && visitsEl) ? visitsEl.value : null;
+  var petDisplay = petname + (breed ? '（' + breed + '）' : '');
+  var newB = {id:BOOKINGS.length+1, name:name, pet:petDisplay||'—', svc:svc, date:date.replace(/-/g,'/'), time:stime+'〜'+etime, amt:amt, status:'confirmed', visits:visits};
+  BOOKINGS.unshift(newB);
+  if (withKarte) {
+    var exists = null;
+    KARTES.forEach(function(k){ if(k.owner===name && k.name===petname) exists=k; });
+    if (exists) {
+      exists.weight = document.getElementById('ab-weight').value || exists.weight;
+      exists.med    = document.getElementById('ab-med').value    || exists.med;
+      exists.food   = document.getElementById('ab-food').value   || exists.food;
+      exists.ac     = document.getElementById('ab-ac').value     || exists.ac;
+      exists.ownerPhone = document.getElementById('ab-phone').value || exists.ownerPhone;
+      exists.ownerAddr  = document.getElementById('ab-addr').value  || exists.ownerAddr;
+      exists.note   = document.getElementById('ab-note').value   || exists.note;
+      showToast('予約を追加し、カルテを更新しました！');
+    } else {
+      var bp = (document.getElementById('ab-breed').value||'').split('・');
+      KARTES.push({id:KARTES.length+1, emoji:'🐾', bg:'#E8F5F0', name:petname||'（未設定）', owner:name,
+        ownerPhone:document.getElementById('ab-phone').value||'', ownerAddr:document.getElementById('ab-addr').value||'',
+        breed:bp[0]||'', age:bp[1]||'', sex:'', weight:document.getElementById('ab-weight').value||'', color:'',
+        food:document.getElementById('ab-food').value||'', ac:document.getElementById('ab-ac').value||'',
+        med:document.getElementById('ab-med').value||'なし', allergy:'なし', vet:'', vaccinated:'',
+        note:document.getElementById('ab-note').value||'', photos:[], history:[], care:[]});
+      showToast('予約を追加し、新しいカルテを作成しました！');
+    }
+  } else {
+    showToast('予約を追加しました！');
+  }
+  closeAddBooking();
+  renderBookings('month');
+}
+
+/* ═══════════════════════════════════════
+   KARTE
+═══════════════════════════════════════ */
+function renderKarte() {
+  var customers = {};
+  KARTES.forEach(function(k){
+    if (!customers[k.owner]) customers[k.owner] = {name:k.owner, pets:[]};
+    customers[k.owner].pets.push(k);
+  });
+  var custList = Object.keys(customers).map(function(k){ return customers[k]; });
+  var el = document.getElementById('customer-karte-list');
+  var html = '';
+  for (var ci = 0; ci < custList.length; ci++) {
+    var c = custList[ci];
+    var bookCount = BOOKINGS.filter(function(b){ return b.name === c.name; }).length;
+    var lastBooks = BOOKINGS.filter(function(b){ return b.name === c.name; }).sort(function(a,b){ return b.id-a.id; });
+    var lastBook = lastBooks[0];
+    var hasAlert = c.pets.some(function(p){ return p.med !== 'なし' || p.allergy !== 'なし'; });
+    var alertBadge = hasAlert ? '<span style="margin-left:6px;font-size:10px;background:var(--amber-l);color:var(--amber);padding:1px 7px;border-radius:20px;font-weight:700;">⚠️ 要注意</span>' : '';
+    html += '<div class="customer-card">' +
+      '<div class="cc-header" data-ci="' + ci + '">' +
+        '<div class="cc-av">' + (c.pets[0] ? c.pets[0].emoji : '👤') + '</div>' +
+        '<div style="flex:1;min-width:0;"><div class="cc-name">' + esc(c.name) + '</div>' +
+        '<div class="cc-meta">ペット ' + c.pets.length + '頭 ／ 利用 ' + bookCount + '回' + (lastBook ? ' ／ 最終: '+lastBook.date : '') + alertBadge + '</div></div>' +
+        '<div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end;flex-shrink:0;">' +
+          '<button type="button" class="tbtn" style="font-size:11px;padding:4px 9px;" onclick-nav="bookings">📅 予約</button>' +
+          '<button type="button" class="tbtn invoice-karte-btn" data-type="estimate" data-name="' + esc(c.name) + '" style="font-size:11px;padding:4px 9px;">📋 見積</button>' +
+          '<button type="button" class="tbtn tbtn-primary invoice-karte-btn" data-type="invoice" data-name="' + esc(c.name) + '" style="font-size:11px;padding:4px 9px;">💴 請求書</button>' +
+          '<span style="color:var(--text-s);font-size:18px;padding:0 4px;" id="cc-arrow-' + ci + '">›</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="cc-body" id="cc-body-' + ci + '">';
+    // ペットタブ
+    html += '<div class="pet-chips">';
+    for (var pi = 0; pi < c.pets.length; pi++) {
+      html += '<div class="pet-chip' + (pi===0?' on':'') + '" data-ci="' + ci + '" data-pi="' + pi + '">' + c.pets[pi].emoji + ' ' + c.pets[pi].name + '</div>';
+    }
+    html += '</div>';
+    // ペット詳細
+    for (var pi2 = 0; pi2 < c.pets.length; pi2++) {
+      var p = c.pets[pi2];
+      var lb2 = lastBook;
+      var pVisit = (lb2 && lb2.visits && VISITS_SHOW_FOR.some(function(s){ return lb2.svc.indexOf(s)!==-1; })) ? visitLabel(lb2.visits) : null;
+      var visitRow = pVisit ? '<div class="pd-item" style="margin-bottom:10px;background:var(--green-l);border:1px solid var(--green-m);"><div class="pd-lbl" style="color:var(--green-d);font-weight:700;">🐾 1日の訪問回数（直近予約）</div><div class="pd-val" style="font-size:13px;color:var(--green-d);">' + pVisit + '</div></div>' : '';
+      html += '<div class="pet-detail" id="pet-detail-' + ci + '-' + pi2 + '" style="' + (pi2===0?'':'display:none;') + '">';
+      if (p.med !== 'なし') html += '<div class="med-warn">💊 <div><strong>投薬あり</strong> — ' + esc(p.med) + '</div></div>';
+      if (p.allergy !== 'なし') html += '<div class="med-warn" style="background:var(--pink-l);border-color:var(--pink-m);color:var(--pink);">⚠️ <div><strong>アレルギー</strong> — ' + esc(p.allergy) + '</div></div>';
+      html += '<div style="font-size:11px;font-weight:700;color:var(--text-s);margin-bottom:6px;">オーナー情報</div>';
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;"><div class="pd-item"><div class="pd-lbl">電話番号</div><div class="pd-val" style="font-size:12px;">' + esc(p.ownerPhone) + '</div></div><div class="pd-item" style="grid-column:1/-1;"><div class="pd-lbl">住所</div><div class="pd-val" style="font-size:11px;line-height:1.5;">' + esc(p.ownerAddr) + '</div></div></div>';
+      html += '<div style="font-size:11px;font-weight:700;color:var(--text-s);margin-bottom:6px;">ペット基本情報</div>';
+      html += '<div class="pd-grid"><div class="pd-item"><div class="pd-lbl">種類</div><div class="pd-val">' + esc(p.breed) + '</div></div><div class="pd-item"><div class="pd-lbl">年齢・性別</div><div class="pd-val">' + esc(p.age) + '・' + esc(p.sex) + '</div></div><div class="pd-item"><div class="pd-lbl">体重</div><div class="pd-val">' + esc(p.weight) + '</div></div><div class="pd-item"><div class="pd-lbl">毛色</div><div class="pd-val">' + esc(p.color) + '</div></div><div class="pd-item"><div class="pd-lbl">ワクチン</div><div class="pd-val">' + esc(p.vaccinated) + '</div></div><div class="pd-item"><div class="pd-lbl">かかりつけ病院</div><div class="pd-val" style="font-size:11px;">' + esc(p.vet) + '</div></div></div>';
+      html += '<div class="pd-item" style="margin-bottom:6px;"><div class="pd-lbl">🍽️ フード・給餌量</div><div class="pd-val" style="font-size:12px;line-height:1.6;">' + esc(p.food) + '</div></div>';
+      html += '<div class="pd-item" style="margin-bottom:6px;"><div class="pd-lbl">❄️ エアコン設定温度</div><div class="pd-val">' + esc(p.ac||'指定なし') + '</div></div>';
+      html += visitRow;
+      html += '<div style="font-size:11px;font-weight:700;color:var(--text-s);margin-bottom:6px;">特記事項・性格</div>';
+      html += '<div style="font-size:12px;color:var(--text-m);line-height:1.75;background:var(--white);border-radius:var(--radius-s);padding:10px;margin-bottom:10px;">' + esc(p.note) + '</div>';
+      // 写真
+      html += '<div style="font-size:11px;font-weight:700;color:var(--text-s);margin-bottom:6px;">写真ギャラリー</div>';
+      html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">';
+      for (var phi = 0; phi < p.photos.length; phi++) {
+        html += '<div style="width:64px;height:64px;border-radius:var(--radius-s);background:var(--white);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:28px;">' + p.photos[phi] + '</div>';
+      }
+      html += '<div class="photo-add-btn" style="width:64px;height:64px;border-radius:var(--radius-s);background:var(--white);border:1.5px dashed var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:18px;color:var(--text-s);cursor:pointer;gap:2px;">＋<span style="font-size:9px;">追加</span></div>';
+      html += '</div>';
+      // 対応履歴
+      html += '<div style="font-size:11px;font-weight:700;color:var(--text-s);margin-bottom:6px;">対応履歴</div>';
+      html += '<div class="history-list">';
+      for (var hi = 0; hi < p.history.length; hi++) {
+        html += '<div class="hist-item"><div class="hist-date">' + esc(p.history[hi].date) + '</div><div>' + esc(p.history[hi].content) + '</div></div>';
+      }
+      html += '</div></div>';
+    }
+    html += '</div></div>';
+  }
+  el.innerHTML = html;
+
+  // ヘッダークリックで折りたたみ
+  el.querySelectorAll('.cc-header').forEach(function(hdr){
+    hdr.addEventListener('click', function(e){
+      // ボタン類は親のクリックを使わない
+      if (e.target.tagName === 'BUTTON') return;
+      var ci2 = hdr.getAttribute('data-ci');
+      var body = document.getElementById('cc-body-' + ci2);
+      var arrow = document.getElementById('cc-arrow-' + ci2);
+      var open = body.classList.toggle('open');
+      if (arrow) arrow.textContent = open ? '∨' : '›';
+    });
+  });
+  // ペットタブ
+  el.querySelectorAll('.pet-chip').forEach(function(chip){
+    chip.addEventListener('click', function(){
+      var ci2 = chip.getAttribute('data-ci');
+      var pi2 = parseInt(chip.getAttribute('data-pi'), 10);
+      var body2 = document.getElementById('cc-body-' + ci2);
+      body2.querySelectorAll('.pet-chip').forEach(function(c){ c.classList.remove('on'); });
+      chip.classList.add('on');
+      body2.querySelectorAll('[id^="pet-detail-' + ci2 + '-"]').forEach(function(d,i){ d.style.display=(i===pi2?'block':'none'); });
+    });
+  });
+  // 予約・見積・請求書ボタン（カルテ内）
+  el.querySelectorAll('[onclick-nav="bookings"]').forEach(function(btn){
+    btn.addEventListener('click', function(e){ e.stopPropagation(); nav('bookings'); });
+  });
+  el.querySelectorAll('.invoice-karte-btn').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      showInvoice(btn.getAttribute('data-type'), btn.getAttribute('data-name'), null, null);
+    });
+  });
+  // 写真追加ボタン
+  el.querySelectorAll('.photo-add-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){ showToast('写真をアップロードします（モック）'); });
+  });
+}
+
+function openKarteByOwner(ownerName) {
+  var customers = {};
+  KARTES.forEach(function(k){ if(!customers[k.owner]) customers[k.owner]={name:k.owner,pets:[]}; customers[k.owner].pets.push(k); });
+  var keys = Object.keys(customers);
+  var idx = keys.indexOf(ownerName);
+  if (idx >= 0) {
+    var body = document.getElementById('cc-body-' + idx);
+    var arrow = document.getElementById('cc-arrow-' + idx);
+    if (body && !body.classList.contains('open')) {
+      body.classList.add('open');
+      if (arrow) arrow.textContent = '∨';
+      setTimeout(function(){ body.scrollIntoView({behavior:'smooth',block:'start'}); }, 100);
+    }
+  }
+}
+
+/* ═══════════════════════════════════════
+   LINE
+═══════════════════════════════════════ */
+var LINE_SCENARIOS = [
+  {label:'📅 空き確認・予約希望', text:'来週の土曜日にお留守番をお願いしたいのですが、空きはありますか？'},
+  {label:'💰 料金について', text:'お留守番の料金を教えていただけますか？'},
+  {label:'💊 投薬対応について', text:'1日1回薬を飲ませる必要があるのですが、対応していただけますか？'},
+  {label:'🐾 ケア報告（送信用）', text:'ただいまお散歩から戻りました。とても元気にしていますよ😊'},
+  {label:'📋 予約内容の確認', text:'先日お伝えした日程と内容で間違いないか確認させてください。'},
+  {label:'🌸 お礼メッセージ', text:'先日はありがとうございました。また機会があればぜひお願いしたいです。'}
+];
+
+function renderLineScenarios() {
+  var el = document.getElementById('line-scenarios');
+  if (!el) return;
+  var html = '';
+  for (var i = 0; i < LINE_SCENARIOS.length; i++) {
+    html += '<button type="button" class="line-sc-btn" data-idx="' + i + '">' + esc(LINE_SCENARIOS[i].label) + '</button>';
+  }
+  el.innerHTML = html;
+  el.querySelectorAll('.line-sc-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      el.querySelectorAll('.line-sc-btn').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      var idx = parseInt(btn.getAttribute('data-idx'), 10);
+      document.getElementById('line-input').value = LINE_SCENARIOS[idx].text;
+      document.getElementById('line-recv-bubble').textContent = LINE_SCENARIOS[idx].text;
+      document.getElementById('line-output-area').innerHTML = '';
+      var sent = document.getElementById('line-sent-msg');
+      if (sent) sent.remove();
+    });
+  });
+}
+
+document.getElementById('btn-gen-line').addEventListener('click', function() {
+  var msg = document.getElementById('line-input').value.trim();
+  if (!msg) { showToast('メッセージを入力してください'); return; }
+  document.getElementById('line-recv-bubble').textContent = msg;
+  var btn = document.getElementById('btn-gen-line');
+  btn.disabled = true;
+  btn.textContent = '生成中...';
+  document.getElementById('line-output-area').innerHTML = '<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-s);padding:8px 0;"><span class="spin"></span> AIが返信文を生成中...</div>';
+  var existSent = document.getElementById('line-sent-msg');
+  if (existSent) existSent.remove();
+
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 500,
+      messages: [{role:'user', content:'あなたはペットシッター「さおり」のLINEアシスタントです。以下のお客様からのLINEメッセージに対して、温かく自然な口調で120字以内の返信文を書いてください。絵文字を1〜2個使ってください。\n\nメッセージ: ' + msg}]
+    })
+  }).then(function(res){ return res.json(); }).then(function(data){
+    var reply = (data.content && data.content[0] && data.content[0].text) ? data.content[0].text : '';
+    var oArea = document.getElementById('line-output-area');
+    oArea.innerHTML = '<div style="font-size:11px;font-weight:700;color:var(--text-m);margin-bottom:4px;">✨ AI生成された返信文:</div><div class="line-result-box" id="line-result-text">' + esc(reply) + '</div><button type="button" class="line-copy-btn" id="btn-line-copy">コピーする</button>';
+    document.getElementById('btn-line-copy').addEventListener('click', function(){
+      var txt = document.getElementById('line-result-text').textContent;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(txt).then(function(){
+          document.getElementById('btn-line-copy').textContent = 'コピーしました！';
+          setTimeout(function(){ var b=document.getElementById('btn-line-copy'); if(b) b.textContent='コピーする'; }, 2000);
+        });
+      }
+    });
+    var chat = document.getElementById('line-chat');
+    var div = document.createElement('div');
+    div.id = 'line-sent-msg';
+    div.className = 'line-msg line-msg-sent';
+    div.innerHTML = '<div class="line-bubble">' + esc(reply) + '</div><div class="line-time">送信済み</div>';
+    chat.appendChild(div);
+  }).catch(function(){
+    document.getElementById('line-output-area').innerHTML = '<div style="font-size:12px;color:var(--pink);padding:8px 0;">エラーが発生しました。もう一度お試しください。</div>';
+  }).finally(function(){
+    btn.disabled = false;
+    btn.textContent = '✨ 返信文を生成する';
+  });
+});
+
+/* ═══════════════════════════════════════
+   SALES
+═══════════════════════════════════════ */
+function renderBarChart() {
+  var c = document.getElementById('bar-chart');
+  if (!c) return;
+  var vals = [142000, 118000, 156000, 138000, 164700, 184500];
+  var max = Math.max.apply(null, vals);
+  var html = '';
+  for (var i = 0; i < vals.length; i++) {
+    var h = Math.round(vals[i] / max * 100);
+    html += '<div class="bar-wrap"><div class="bar ' + (i===5?'cur':'') + '" style="height:' + h + 'px;"><span class="bar-v">¥' + Math.round(vals[i]/10000) + '万</span></div></div>';
+  }
+  c.innerHTML = html;
+}
+
+/* ═══════════════════════════════════════
+   REVIEWS
+═══════════════════════════════════════ */
+document.querySelectorAll('.review-ai-btn').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var name = btn.getAttribute('data-name');
+    var text = btn.getAttribute('data-text');
+    genReviewReply(btn, name, text);
+  });
+});
+
+function genReviewReply(btn, name, text) {
+  btn.textContent = '生成中...';
+  btn.disabled = true;
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 400,
+      messages: [{role:'user', content:'ペットシッター「さおり」として口コミへのオーナー返信を80字以内で。口コミ者:'+name+'、口コミ:'+text}]
+    })
+  }).then(function(res){ return res.json(); }).then(function(data){
+    var reply = (data.content && data.content[0] && data.content[0].text) ? data.content[0].text : '';
+    var box = document.createElement('div');
+    box.className = 'replied-box';
+    box.innerHTML = '<strong>AI生成返信:</strong> ' + esc(reply) + '<br><button type="button" class="tbtn tbtn-primary" style="margin-top:7px;font-size:11px;padding:5px 12px;min-height:36px;" id="send-reply-btn">返信を送る</button>';
+    btn.parentNode.replaceChild(box, btn);
+    var sendBtn = box.querySelector('#send-reply-btn');
+    if (sendBtn) {
+      sendBtn.addEventListener('click', function(){
+        sendBtn.textContent = '送信済み ✓';
+        sendBtn.disabled = true;
+      });
+    }
+  }).catch(function(){
+    btn.textContent = '✨ AI返信文を生成';
+    btn.disabled = false;
+  });
+}
+
+/* ═══════════════════════════════════════
+   INVOICE
+═══════════════════════════════════════ */
+var RATES = {'お留守番':2000,'お散歩':1500,'お泊まり':8000,'病院付き添い':3000};
+var KEY_FEE = 1000;
+var EXPENSE_ITEMS = [{name:'交通費（往復）',amount:500},{name:'消耗品費（ケア用品）',amount:300}];
+
+function showInvoice(type, customerName, svc, pet) {
+  var recentBooks = BOOKINGS.filter(function(b){ return b.name === customerName; }).sort(function(a,b){ return b.id-a.id; });
+  var recentBook = recentBooks[0] || null;
+  var custPets = KARTES.filter(function(k){ return k.owner === customerName; });
+  var svcName = svc || (recentBook ? recentBook.svc.split('（')[0] : 'お留守番');
+  var petName = pet || (custPets.length ? custPets.map(function(p){return p.name;}).join('・') : '');
+  var basePrice = (recentBook && recentBook.amt) ? recentBook.amt : (RATES[svcName]||2000)*4;
+  var medPets = custPets.filter(function(p){ return p.med !== 'なし'; });
+  var medFee = medPets.length * 500;
+  var subtotal = basePrice + medFee + KEY_FEE;
+  var isEstimate = type === 'estimate';
+  var expenseTotal = isEstimate ? 0 : EXPENSE_ITEMS.reduce(function(s,e){ return s+e.amount; }, 0);
+  var finalSub = subtotal + expenseTotal;
+  var finalTax = Math.round(finalSub * 0.10);
+  var finalTotal = finalSub + finalTax;
+  var today = MOCK_DATE;
+  var dateStr = today.getFullYear() + '年' + (today.getMonth()+1) + '月' + today.getDate() + '日';
+  var dueDate = new Date(today.getFullYear(), today.getMonth()+1, today.getDate());
+  var dueStr = dueDate.getFullYear() + '年' + (dueDate.getMonth()+1) + '月' + dueDate.getDate() + '日';
+  var docNum = isEstimate ? 'MR-2025-' + (Math.floor(Math.random()*900)+100) : 'INV-2025-' + (Math.floor(Math.random()*900)+100);
+
+  document.getElementById('inv-modal-title').textContent = isEstimate ? '見積もり書' : '請求書';
+
+  var sRows = '<tr><td>' + esc(svcName) + '</td><td style="text-align:center;">1式</td><td style="text-align:right;">¥' + basePrice.toLocaleString() + '</td></tr>';
+  if (medFee) sRows += '<tr><td>投薬対応オプション（' + medPets.map(function(p){return p.name;}).join('・') + '）</td><td style="text-align:center;">' + medPets.length + '頭</td><td style="text-align:right;">¥' + medFee.toLocaleString() + '</td></tr>';
+  sRows += '<tr><td>鍵預かり料</td><td style="text-align:center;">1式</td><td style="text-align:right;">¥' + KEY_FEE.toLocaleString() + '</td></tr>';
+  var eRows = '';
+  if (!isEstimate) {
+    EXPENSE_ITEMS.forEach(function(e){ eRows += '<tr><td>' + esc(e.name) + '</td><td style="text-align:center;">1式</td><td style="text-align:right;">¥' + e.amount.toLocaleString() + '</td></tr>'; });
+  }
+
+  var html = '<div class="inv-doc">' +
+    '<div class="inv-doc-header">' +
+      '<div><div class="inv-doc-logo">🐾 さおりのペットシッター</div><div class="inv-doc-logo-sub">渋谷区・世田谷区・目黒区エリア</div><div class="inv-doc-logo-sub" style="margin-top:4px;">担当: さおり　saori@example.com</div></div>' +
+      '<div><div class="inv-doc-type">' + (isEstimate?'見 積 も り 書':'請 求 書') + '</div><div class="inv-doc-num">No. ' + docNum + '</div><div class="inv-doc-num">発行日: ' + dateStr + '</div>' + (!isEstimate?'<div class="inv-doc-num" style="color:var(--pink);font-weight:700;">支払期限: '+dueStr+'</div>':'') + '</div>' +
+    '</div>' +
+    '<div class="inv-doc-parties">' +
+      '<div><div class="inv-party-lbl">請求先</div><div class="inv-party-name">' + esc(customerName) + ' 様</div><div class="inv-party-detail">ペット: ' + esc(petName||'—') + '</div></div>' +
+      '<div><div class="inv-party-lbl">' + (isEstimate?'有効期限':'サービス期間') + '</div><div class="inv-party-name" style="font-size:13px;">' + (isEstimate?'発行日より30日間':(recentBook?recentBook.date:'—')) + '</div><div class="inv-party-detail">' + (recentBook?recentBook.time:'') + '</div></div>' +
+    '</div>' +
+    '<table class="inv-table"><thead><tr><th>内容</th><th style="text-align:center;">数量</th><th style="text-align:right;">金額</th></tr></thead><tbody>' + sRows + eRows + '</tbody></table>' +
+    '<div class="inv-totals"><div class="inv-total-row"><span>小計</span><span>¥' + finalSub.toLocaleString() + '</span></div><div class="inv-total-row"><span>消費税（10%）</span><span>¥' + finalTax.toLocaleString() + '</span></div><div class="inv-total-row"><span>' + (isEstimate?'お見積もり合計':'ご請求金額') + '</span><span>¥' + finalTotal.toLocaleString() + '</span></div></div>' +
+    '<div class="inv-note">' + (isEstimate?'【備考】本見積もりは発行日より30日間有効です。サービス内容・日時・ペットの状況によって変更になる場合があります。':'【お振込先】〇〇銀行 渋谷支店 普通 1234567 サオリ ペットシッター<br>【備考】お支払い確認後、領収書をお送りします。') + '</div>' +
+    '<div class="inv-footer">さおりのペットシッター ／ Powered by PET MERIT</div>' +
+  '</div>';
+
+  document.getElementById('inv-doc-content').innerHTML = html;
+  document.getElementById('invoice-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeInvoice() {
+  document.getElementById('invoice-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+/* ═══════════════════════════════════════
+   KARTE DETAIL (openKarte は未使用のためモックのみ)
+═══════════════════════════════════════ */
+function closeKarte() {
+  document.getElementById('karte-detail').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+/* ═══════════════════════════════════════
+   UTILITY
+═══════════════════════════════════════ */
+function esc(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#039;');
+}
+
+/* ═══════════════════════════════════════
+   INIT
+═══════════════════════════════════════ */
+// フィルターボタンの初期スタイル
+(function(){
+  var bf = document.getElementById('bf-month');
+  if (bf) {
+    bf.style.background = 'var(--green-l)';
+    bf.style.borderColor = 'var(--green)';
+    bf.style.color = 'var(--green-d)';
+    bf.style.fontWeight = '700';
+  }
+})();
+
+renderBookings('month');
+
+}); // end DOMContentLoaded
+</script>
+</body>
+</html>
