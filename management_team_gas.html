@@ -1,0 +1,1719 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#2A7C5F">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+<title>PET MERIT — チーム管理ダッシュボード</title>
+<style>
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+:root{
+  --green:#2A7C5F;--green-d:#1A5C45;--green-l:#E8F5F0;--green-m:#9FCFBE;
+  --sand:#F7F4EE;--sand-d:#EAE5D8;--white:#FFFFFF;
+  --text:#1C1C1A;--text-m:#5C5C58;--text-s:#9C9C96;
+  --border:#E2DDD4;--radius:12px;--radius-s:8px;
+  --pink:#E05A7A;--pink-l:#FDEEF3;--pink-m:#F4C0D1;
+  --amber:#C47D1E;--amber-l:#FEF3E2;--sidebar:220px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--sand);color:var(--text);font-size:14px;line-height:1.6;display:flex;min-height:100vh;}
+.sidebar{width:var(--sidebar);background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:50;transform:translateX(-100%);transition:transform .25s ease;}
+.sidebar.open{transform:translateX(0);}
+.sb-logo{padding:16px 18px 12px;border-bottom:1px solid var(--border);}
+.sb-logo .logo{font-size:17px;font-weight:700;color:var(--green);}
+.sb-logo small{font-size:10px;color:var(--text-s);display:block;margin-top:1px;}
+.nav-sec{padding:10px 10px 3px;font-size:10px;font-weight:700;color:var(--text-s);letter-spacing:.06em;}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:var(--radius-s);margin:1px 6px;font-size:13px;color:var(--text-m);cursor:pointer;border:none;background:none;font-family:inherit;width:calc(100% - 12px);text-align:left;transition:all .15s;}
+.nav-item:hover{background:var(--sand);color:var(--text);}
+.nav-item.active{background:var(--green-l);color:var(--green-d);font-weight:700;}
+.nav-item .icon{font-size:15px;width:20px;text-align:center;}
+.nav-badge{margin-left:auto;background:var(--pink);color:var(--white);font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;}
+.sb-profile{margin-top:auto;padding:12px 14px;border-top:1px solid var(--border);}
+.sb-profile-label{font-size:10px;color:var(--text-s);margin-bottom:6px;font-weight:700;letter-spacing:.04em;}
+.sb-profile-row{display:flex;align-items:center;gap:8px;}
+.sb-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.sb-name{font-size:13px;font-weight:700;}
+.sb-status{font-size:10px;color:var(--green);}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:49;}
+.sidebar-overlay.on{display:block;}
+.main{flex:1;margin-left:0;}
+.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 14px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;gap:8px;}
+.topbar-left{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.ham{background:none;border:none;cursor:pointer;font-size:22px;color:var(--text);padding:4px;flex-shrink:0;}
+.topbar-title{font-size:14px;font-weight:700;white-space:nowrap;}
+.sitter-switcher{display:flex;align-items:center;background:var(--sand);border:1px solid var(--border);border-radius:20px;padding:3px;flex-shrink:0;overflow-x:auto;max-width:55vw;}
+.sw-btn{display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:16px;cursor:pointer;border:none;background:none;font-size:11px;font-family:inherit;color:var(--text-m);transition:all .15s;white-space:nowrap;flex-shrink:0;}
+.sw-btn:hover{color:var(--text);}
+.sw-btn.active{background:var(--white);color:var(--text);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.1);}
+.sw-btn.team.active{background:var(--green);color:var(--white);}
+.topbar-right{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.tbtn{padding:5px 11px;font-size:12px;border-radius:20px;cursor:pointer;font-family:inherit;border:1px solid var(--border);background:none;color:var(--text-m);white-space:nowrap;}
+.tbtn:hover{border-color:var(--green);color:var(--green);}
+.tbtn-primary{background:var(--green);color:var(--white);border-color:var(--green);}
+.tbtn-primary:hover{background:var(--green-d);}
+@media(max-width:600px){.tbtn.hide-sm{display:none;}}
+.page{display:none;padding:18px 14px;}
+.page.on{display:block;}
+@media(max-width:480px){.page{padding:10px;}}
+.page-sitter-tabs{display:flex;gap:5px;margin-bottom:12px;overflow-x:auto;padding-bottom:2px;}
+.pst-btn{display:flex;align-items:center;gap:4px;padding:5px 11px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid var(--border);background:var(--white);color:var(--text-m);font-family:inherit;white-space:nowrap;flex-shrink:0;transition:all .15s;}
+.pst-btn.active{font-weight:700;}
+.team-banner{background:linear-gradient(135deg,#C8E8DF,#E0F2EC);border-radius:var(--radius);padding:14px 18px;margin-bottom:16px;color:var(--green-d);display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.sitter-banner{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.sitter-banner-av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.sitter-banner-stats{margin-left:auto;display:flex;gap:18px;}
+.sitter-stat{text-align:center;}
+.sitter-stat-val{font-size:16px;font-weight:700;}
+.sitter-stat-lbl{font-size:10px;color:var(--text-s);}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+@media(max-width:700px){.metrics{grid-template-columns:repeat(2,1fr);}}
+.metric{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);padding:12px 14px;}
+.metric-lbl{font-size:11px;color:var(--text-s);margin-bottom:4px;font-weight:500;}
+.metric-val{font-size:21px;font-weight:700;line-height:1;}
+.metric-sub{font-size:11px;color:var(--text-s);margin-top:4px;}
+.up{color:var(--green);font-weight:700;}
+.card{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);padding:14px 16px;margin-bottom:12px;}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.card-title{font-size:13px;font-weight:700;display:flex;align-items:center;gap:5px;}
+.card-link{font-size:12px;color:var(--green);cursor:pointer;background:none;border:none;font-family:inherit;}
+.card-link:hover{text-decoration:underline;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+@media(max-width:700px){.two-col{grid-template-columns:1fr;}}
+.pill{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;display:inline-block;}
+.p-new{background:var(--pink-l);color:var(--pink);}
+.p-confirmed{background:var(--green-l);color:var(--green-d);}
+.p-inprogress{background:var(--amber-l);color:var(--amber);}
+.p-done{background:var(--sand-d);color:var(--text-s);}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.tbl th{text-align:left;padding:7px 9px;font-size:11px;font-weight:700;color:var(--text-s);border-bottom:1px solid var(--border);background:var(--sand);}
+.tbl td{padding:9px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:var(--sand);}
+.team-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;}
+.team-row:last-child{border-bottom:none;}
+.team-row:hover{background:var(--sand);margin:0 -16px;padding:10px 16px;}
+.team-row-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.tl{display:flex;flex-direction:column;}
+.tl-item{display:flex;gap:9px;padding-bottom:11px;}
+.tl-item:last-child{padding-bottom:0;}
+.tl-left{display:flex;flex-direction:column;align-items:center;flex-shrink:0;}
+.tl-dot{width:9px;height:9px;border-radius:50%;background:var(--green);margin-top:3px;}
+.tl-line{flex:1;width:1px;background:var(--border);margin-top:3px;}
+.tl-item:last-child .tl-line{display:none;}
+.tl-title{font-size:13px;font-weight:700;margin-bottom:1px;}
+.tl-sub{font-size:11px;color:var(--text-s);}
+.tl-sitter{font-size:10px;padding:1px 7px;border-radius:10px;font-weight:700;margin-left:6px;vertical-align:middle;}
+.cal-wrap{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;margin-bottom:12px;}
+.cal-header{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid var(--border);gap:8px;flex-wrap:wrap;}
+.cal-nav{background:none;border:1px solid var(--border);border-radius:20px;padding:4px 11px;cursor:pointer;font-size:12px;color:var(--text-m);font-family:inherit;}
+.cal-nav:hover{border-color:var(--green);color:var(--green);}
+.cal-month{font-size:14px;font-weight:700;}
+.cal-grid-full{display:grid;grid-template-columns:repeat(7,1fr);border-top:1px solid var(--border);}
+.cal-dn{text-align:center;padding:7px 3px;font-size:11px;font-weight:700;color:var(--text-s);border-bottom:1px solid var(--border);background:var(--sand);}
+.cal-cell{min-height:68px;padding:5px 6px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;}
+.cal-cell:nth-child(7n){border-right:none;}
+.cal-cell:hover{background:var(--sand);}
+.cal-cell.today{background:var(--green-l);}
+.cal-cell.selected{background:var(--green-l);box-shadow:inset 0 0 0 2px var(--green);}
+.cal-cell.other-month{opacity:.35;}
+.cal-cell-num{font-size:12px;font-weight:700;margin-bottom:3px;}
+.cal-cell.today .cal-cell-num{color:var(--green-d);}
+.cal-ev{font-size:10px;padding:2px 5px;border-radius:4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cal-detail{padding:12px 14px;border-top:1px solid var(--border);background:var(--sand);}
+.cal-detail-title{font-size:12px;font-weight:700;color:var(--text-m);margin-bottom:7px;}
+.cal-ev-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--white);border-radius:var(--radius-s);margin-bottom:5px;border:1px solid var(--border);}
+.cal-ev-time{font-size:11px;font-weight:700;color:var(--green);min-width:65px;}
+.cal-ev-name{font-size:13px;font-weight:700;}
+.cal-ev-sub{font-size:11px;color:var(--text-s);}
+.cal-ev-sitter{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;margin-left:auto;flex-shrink:0;}
+.booking-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:9px;}
+.sc-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;border-radius:12px;padding:2px 9px 2px 6px;margin-bottom:6px;}
+.customer-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:10px;}
+.cc-header{display:flex;align-items:center;gap:11px;padding:13px 14px;cursor:pointer;}
+.cc-header:hover{background:var(--sand);}
+.cc-av{width:38px;height:38px;border-radius:50%;background:var(--pink-l);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
+.cc-name{font-size:14px;font-weight:700;}
+.cc-meta{font-size:11px;color:var(--text-s);}
+.cc-body{padding:12px 14px;display:none;border-top:1px solid var(--border);}
+.cc-body.open{display:block;}
+.pet-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;}
+.pet-chip{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;border:1px solid var(--border);background:var(--sand);cursor:pointer;font-size:12px;}
+.pet-chip:hover{border-color:var(--green);}
+.med-warn{background:var(--amber-l);border:1px solid #EFC06A;border-radius:var(--radius-s);padding:8px 11px;font-size:12px;color:var(--amber);display:flex;align-items:center;gap:6px;margin-bottom:9px;}
+.ktag{font-size:10px;padding:1px 7px;border-radius:20px;}
+.ktag-g{background:var(--green-l);color:var(--green-d);}
+.ktag-r{background:var(--pink-l);color:var(--pink);}
+.karte-detail{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.4);align-items:flex-start;justify-content:center;padding:16px;}
+.karte-detail.open{display:flex;}
+.karte-modal{background:var(--white);border-radius:var(--radius);width:100%;max-width:580px;max-height:90vh;overflow-y:auto;margin-top:16px;}
+.kd-header{display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1px solid var(--border);}
+.kd-av{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:25px;}
+.kd-name{font-size:18px;font-weight:700;}
+.kd-owner{font-size:12px;color:var(--text-s);}
+.kd-close{margin-left:auto;background:none;border:none;cursor:pointer;font-size:22px;color:var(--text-s);}
+.kd-body{padding:16px;}
+.kd-sec{margin-bottom:16px;}
+.kd-sec-title{font-size:11px;font-weight:700;color:var(--text-s);letter-spacing:.06em;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border);}
+.kd-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+@media(max-width:480px){.kd-grid{grid-template-columns:1fr;}}
+.kd-field{background:var(--sand);border-radius:var(--radius-s);padding:8px 10px;}
+.kd-field-lbl{font-size:10px;color:var(--text-s);margin-bottom:2px;font-weight:700;}
+.kd-field-val{font-size:13px;font-weight:500;}
+.kd-med-alert{background:var(--amber-l);border:1px solid #EFC06A;border-radius:var(--radius-s);padding:9px 11px;font-size:13px;color:var(--amber);display:flex;align-items:flex-start;gap:7px;margin-bottom:12px;}
+.kd-note{background:var(--sand);border-radius:var(--radius-s);padding:9px 11px;font-size:13px;color:var(--text-m);line-height:1.7;}
+.kd-history{display:flex;flex-direction:column;gap:7px;}
+.kd-hist-item{display:flex;gap:9px;font-size:12px;padding:7px 9px;background:var(--sand);border-radius:var(--radius-s);}
+.kd-hist-date{color:var(--text-s);min-width:55px;font-weight:700;}
+.care-check{display:flex;flex-direction:column;gap:5px;}
+.care-item{display:flex;align-items:center;gap:7px;padding:7px 9px;background:var(--sand);border-radius:var(--radius-s);font-size:13px;}
+.care-check-box{width:17px;height:17px;border-radius:4px;border:1.5px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.care-check-box.checked{background:var(--green);border-color:var(--green);color:var(--white);}
+.bar-chart{display:flex;align-items:flex-end;gap:4px;height:110px;padding-top:12px;}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.bar{width:100%;border-radius:4px 4px 0 0;position:relative;min-height:4px;}
+.bar-v{font-size:9px;color:var(--text-s);position:absolute;top:-14px;left:50%;transform:translateX(-50%);white-space:nowrap;}
+.bar-lbl{font-size:9px;color:var(--text-s);}
+.prog-row{margin-bottom:9px;}
+.prog-head{display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px;}
+.prog-bar{background:var(--sand-d);border-radius:4px;height:6px;overflow:hidden;}
+.prog-fill{height:100%;background:var(--green);border-radius:4px;}
+.review-item{padding:10px 0;border-bottom:1px solid var(--border);}
+.review-item:last-child{border-bottom:none;}
+.review-head{display:flex;align-items:center;gap:7px;margin-bottom:3px;}
+.review-name{font-weight:700;font-size:12px;}
+.review-date{font-size:11px;color:var(--text-s);margin-left:auto;}
+.review-text{font-size:12px;color:var(--text-m);line-height:1.7;}
+.replied-box{margin-top:5px;padding:7px 9px;background:var(--green-l);border-radius:var(--radius-s);font-size:12px;color:var(--green-d);border-left:3px solid var(--green);}
+.ai-btn{padding:5px 11px;font-size:11px;border:1px solid var(--green-m);border-radius:20px;background:none;color:var(--green);cursor:pointer;font-family:inherit;margin-top:5px;}
+.ai-btn:hover{background:var(--green-l);}
+.setting-row{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:11px 0;border-bottom:1px solid var(--border);}
+.setting-row:last-child{border-bottom:none;}
+.setting-lbl{font-size:13px;font-weight:700;}
+.setting-desc{font-size:11px;color:var(--text-s);margin-top:1px;}
+.setting-val{font-size:13px;color:var(--text-m);text-align:right;flex:1;}
+.edit-btn{padding:3px 10px;font-size:11px;border:1px solid var(--border);border-radius:20px;background:none;cursor:pointer;color:var(--text-m);font-family:inherit;flex-shrink:0;}
+.edit-btn:hover{border-color:var(--green);color:var(--green);}
+.toggle{position:relative;display:inline-block;width:38px;height:20px;}
+.toggle input{display:none;}
+.toggle-sl{position:absolute;inset:0;border-radius:20px;background:var(--border);cursor:pointer;transition:.2s;}
+.toggle-sl:before{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:var(--white);top:3px;left:3px;transition:.2s;}
+.toggle input:checked+.toggle-sl{background:var(--green);}
+.toggle input:checked+.toggle-sl:before{transform:translateX(18px);}
+.add-sheet{display:none;background:var(--white);border:1.5px solid var(--green-m);border-radius:var(--radius);padding:14px;margin-bottom:12px;}
+.add-sheet.open{display:block;}
+.form-label{font-size:12px;color:var(--text-m);margin-bottom:3px;font-weight:500;display:block;}
+.form-input{width:100%;border:1px solid var(--border);border-radius:var(--radius-s);padding:8px 10px;font-size:16px;font-family:inherit;color:var(--text);}
+.form-input:focus{outline:none;border-color:var(--green);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.invoice-modal{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:14px;}
+.invoice-modal.open{display:flex;}
+.invoice-wrap{background:var(--white);border-radius:var(--radius);width:100%;max-width:540px;max-height:92vh;overflow-y:auto;}
+.inv-toolbar{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid var(--border);background:var(--sand);}
+.inv-btn{padding:6px 12px;font-size:12px;border-radius:20px;cursor:pointer;font-family:inherit;border:1px solid var(--border);background:var(--white);color:var(--text-m);}
+.inv-btn-primary{background:var(--pink);color:var(--white);border-color:var(--pink);}
+.inv-close{background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-s);}
+.inv-doc{padding:22px 26px;}
+.inv-doc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid var(--pink);}
+.inv-doc-logo{font-size:15px;font-weight:700;color:var(--pink);}
+.inv-doc-logo-sub{font-size:11px;color:var(--text-s);margin-top:2px;}
+.inv-doc-type{font-size:19px;font-weight:700;text-align:right;}
+.inv-doc-num{font-size:11px;color:var(--text-s);text-align:right;margin-top:3px;}
+.inv-doc-parties{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
+.inv-party-lbl{font-size:10px;color:var(--text-s);font-weight:700;margin-bottom:3px;letter-spacing:.05em;}
+.inv-party-name{font-size:14px;font-weight:700;}
+.inv-party-detail{font-size:11px;color:var(--text-m);margin-top:2px;line-height:1.6;}
+.inv-table{width:100%;border-collapse:collapse;margin-bottom:12px;font-size:13px;}
+.inv-table th{background:var(--sand);padding:7px 9px;text-align:left;font-size:11px;font-weight:700;color:var(--text-s);border-bottom:1px solid var(--border);}
+.inv-table td{padding:9px;border-bottom:1px solid var(--border);}
+.inv-totals{margin-left:auto;width:190px;}
+.inv-total-row{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid var(--border);}
+.inv-total-row:last-child{border-bottom:none;font-size:15px;font-weight:700;color:var(--pink);padding-top:6px;}
+.inv-note{margin-top:14px;padding:9px;background:var(--sand);border-radius:var(--radius-s);font-size:11px;color:var(--text-m);line-height:1.7;}
+.inv-footer{margin-top:16px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--text-s);text-align:center;}
+.line-demo{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px;}
+@media(max-width:600px){.line-demo{grid-template-columns:1fr;}}
+.line-left{background:var(--sand);padding:14px;}
+.line-right{background:var(--white);padding:14px;}
+.line-sec-title{font-size:12px;font-weight:700;color:var(--text-m);margin-bottom:7px;}
+.line-scenario{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+.line-sc-btn{padding:7px 10px;border-radius:var(--radius-s);border:1px solid var(--border);background:var(--white);font-size:12px;color:var(--text-m);cursor:pointer;font-family:inherit;text-align:left;transition:all .15s;}
+.line-sc-btn:hover,.line-sc-btn.active{background:var(--green-l);border-color:var(--green);color:var(--green-d);font-weight:700;}
+.line-input-area{display:flex;flex-direction:column;gap:6px;}
+.line-input-area textarea{width:100%;border:1px solid var(--border);border-radius:var(--radius-s);padding:8px 10px;font-size:13px;font-family:inherit;color:var(--text);resize:none;min-height:68px;}
+.line-input-area textarea:focus{outline:none;border-color:var(--green);}
+.line-gen-btn{padding:9px;background:var(--green);color:var(--white);border:none;border-radius:var(--radius-s);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
+.line-gen-btn:disabled{opacity:.6;cursor:not-allowed;}
+.line-phone{background:#1E1E1E;border-radius:13px;overflow:hidden;max-width:240px;margin:0 auto;}
+.line-phone-header{background:#00B900;padding:8px 11px;}
+.line-phone-name{font-size:12px;font-weight:700;color:#fff;}
+.line-phone-sub{font-size:10px;color:rgba(255,255,255,.7);}
+.line-chat{background:#87CEAB;padding:9px;min-height:140px;display:flex;flex-direction:column;gap:6px;}
+.line-msg{max-width:85%;}
+.line-msg-recv{align-self:flex-start;display:flex;gap:5px;}
+.line-msg-sent{align-self:flex-end;}
+.line-bubble{padding:7px 9px;border-radius:11px;font-size:11px;line-height:1.5;}
+.line-msg-recv .line-bubble{background:#fff;border-radius:3px 11px 11px 11px;}
+.line-msg-sent .line-bubble{background:#00B900;color:#fff;border-radius:11px 3px 11px 11px;}
+.line-recv-av{width:22px;height:22px;border-radius:50%;background:var(--pink-l);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;}
+.line-result-box{background:var(--green-l);border:1px solid var(--green-m);border-radius:var(--radius-s);padding:9px;font-size:12px;color:var(--text);line-height:1.7;margin-top:7px;white-space:pre-wrap;}
+.line-copy-btn{padding:4px 9px;font-size:11px;border:1px solid var(--green-m);border-radius:20px;background:none;color:var(--green);cursor:pointer;font-family:inherit;margin-top:4px;}
+.spin{width:11px;height:11px;border:2px solid var(--green-m);border-top-color:var(--green);border-radius:50%;animation:sp .8s linear infinite;display:inline-block;}
+@keyframes sp{to{transform:rotate(360deg)}}
+/* TEAM CHAT - LINE style */
+.chat-wrap{display:flex;height:calc(100vh - 54px);background:var(--white);overflow:hidden;}
+/* ルーム一覧 */
+.chat-rooms{width:260px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;height:100%;}
+@media(max-width:640px){.chat-rooms{width:100%;position:absolute;z-index:10;height:100%;transition:transform .2s;}.chat-rooms.hidden{transform:translateX(-100%);}}
+.chat-rooms-head{padding:14px 16px 10px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.chat-rooms-title{font-size:15px;font-weight:700;margin-bottom:8px;}
+.chat-new-btn{width:100%;padding:7px;background:var(--green);color:#fff;border:none;border-radius:var(--radius-s);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+.chat-new-btn:hover{background:var(--green-d);}
+.chat-room-list{flex:1;overflow-y:auto;min-height:0;}
+.chat-room-item{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s;position:relative;}
+.chat-room-item:hover{background:var(--sand);}
+.chat-room-item.active{background:var(--green-l);}
+.chat-room-av{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;position:relative;}
+.chat-room-av-badge{position:absolute;bottom:0;right:0;width:11px;height:11px;border-radius:50%;background:var(--green);border:2px solid var(--white);}
+.chat-room-info{flex:1;min-width:0;}
+.chat-room-name{font-size:13px;font-weight:700;margin-bottom:2px;}
+.chat-room-preview{font-size:11px;color:var(--text-s);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.chat-room-meta{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;}
+.chat-room-time{font-size:10px;color:var(--text-s);}
+.chat-unread{background:var(--green);color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px;}
+/* チャット本体 */
+.chat-main{flex:1;display:flex;flex-direction:column;min-width:0;height:100%;overflow:hidden;}
+.chat-header{padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--white);flex-shrink:0;}
+.chat-header-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.chat-header-name{font-size:14px;font-weight:700;}
+.chat-header-sub{font-size:11px;color:var(--text-s);}
+.chat-messages{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;background:var(--sand);min-height:0;}
+.chat-msg-row{display:flex;gap:8px;align-items:flex-end;}
+.chat-msg-row.mine{flex-direction:row-reverse;}
+.chat-msg-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.chat-bubble{max-width:70%;padding:9px 12px;border-radius:14px;font-size:13px;line-height:1.6;word-break:break-word;}
+.chat-msg-row:not(.mine) .chat-bubble{background:var(--white);border-radius:4px 14px 14px 14px;box-shadow:0 1px 2px rgba(0,0,0,.06);}
+.chat-msg-row.mine .chat-bubble{background:var(--green);color:#fff;border-radius:14px 4px 14px 14px;}
+.chat-msg-time{font-size:10px;color:var(--text-s);margin-bottom:2px;flex-shrink:0;}
+.chat-msg-sender{font-size:10px;color:var(--text-s);margin-bottom:3px;}
+.chat-date-sep{text-align:center;font-size:10px;color:var(--text-s);margin:4px 0;display:flex;align-items:center;gap:8px;}
+.chat-date-sep::before,.chat-date-sep::after{content:'';flex:1;height:1px;background:var(--border);}
+.chat-input-bar{padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end;background:var(--white);flex-shrink:0;}
+.chat-input{flex:1;border:1px solid var(--border);border-radius:20px;padding:8px 14px;font-size:16px;font-family:inherit;color:var(--text);resize:none;max-height:100px;line-height:1.5;}
+.chat-input:focus{outline:none;border-color:var(--green);}
+.chat-send-btn{width:38px;height:38px;border-radius:50%;background:var(--green);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.chat-send-btn:hover{background:var(--green-d);}
+/* スレッドパネル */
+.thread-panel{width:300px;border-left:1px solid var(--border);display:flex;flex-direction:column;background:var(--white);flex-shrink:0;transition:width .2s ease;}
+.thread-panel.closed{width:0;overflow:hidden;border-left:none;}
+.thread-header{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.thread-parent{background:var(--sand);border-radius:var(--radius-s);padding:10px 12px;margin:10px 12px;font-size:12px;border-left:3px solid var(--green);}
+.thread-replies{flex:1;overflow-y:auto;padding:8px 12px;display:flex;flex-direction:column;gap:7px;}
+.thread-reply{display:flex;gap:7px;align-items:flex-start;}
+.thread-reply-av{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+.thread-reply-bubble{background:var(--sand);border-radius:var(--radius-s);padding:7px 10px;font-size:12px;flex:1;}
+.thread-reply-sender{font-size:10px;font-weight:700;color:var(--text-m);margin-bottom:2px;}
+.thread-input-bar{padding:9px 12px;border-top:1px solid var(--border);display:flex;gap:6px;align-items:flex-end;flex-shrink:0;}
+.chat-main-body{display:flex;flex:1;overflow:hidden;min-height:0;}
+/* トピックタグ */
+.topic-tag{display:inline-block;font-size:10px;padding:1px 7px;border-radius:10px;font-weight:700;margin-right:5px;vertical-align:middle;}
+.topic-予約{background:var(--green-l);color:var(--green-d);}
+.topic-ケア{background:var(--amber-l);color:var(--amber);}
+.topic-シフト{background:#EBF3FF;color:#3A7CC7;}
+.topic-共有{background:var(--pink-l);color:var(--pink);}
+.reaction-bar{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;}
+.reaction{font-size:11px;padding:2px 7px;border-radius:12px;background:var(--sand-d);cursor:pointer;border:1px solid transparent;font-family:inherit;}
+.reaction:hover{background:var(--green-l);}
+.reaction.reacted{background:var(--green-l);border-color:var(--green-m);}
+.thread-btn{background:none;border:none;cursor:pointer;font-size:11px;color:var(--text-s);padding:2px 6px;border-radius:4px;font-family:inherit;}
+.thread-btn:hover{background:var(--sand-d);color:var(--text);}
+.chat-ai-btn{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;border:1px solid var(--green-m);background:var(--green-l);color:var(--green-d);font-size:11px;cursor:pointer;font-family:inherit;margin-right:4px;}
+.chat-ai-btn:hover{background:var(--green);color:#fff;}
+/* 新規チャット作成モーダル */
+.new-chat-modal{display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.4);align-items:center;justify-content:center;padding:16px;}
+.new-chat-modal.open{display:flex;}
+.new-chat-wrap{background:var(--white);border-radius:var(--radius);width:100%;max-width:400px;overflow:hidden;}
+/* スレッド */
+.thread-btn{background:none;border:none;cursor:pointer;font-size:11px;color:var(--text-s);padding:2px 6px;border-radius:4px;font-family:inherit;}
+.thread-btn:hover{background:var(--sand-d);color:var(--text);}
+.thread-panel{width:320px;border-left:1px solid var(--border);display:flex;flex-direction:column;background:var(--white);flex-shrink:0;transition:width .2s ease;}
+.thread-panel.closed{width:0;overflow:hidden;border-left:none;}
+.thread-header{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.thread-parent{background:var(--sand);border-radius:var(--radius-s);padding:10px 12px;margin:10px 12px;font-size:12px;border-left:3px solid var(--green);}
+.thread-replies{flex:1;overflow-y:auto;padding:8px 12px;display:flex;flex-direction:column;gap:7px;}
+.thread-reply{display:flex;gap:7px;align-items:flex-start;}
+.thread-reply-av{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+.thread-reply-bubble{background:var(--sand);border-radius:var(--radius-s);padding:7px 10px;font-size:12px;flex:1;}
+.thread-reply-sender{font-size:10px;font-weight:700;color:var(--text-m);margin-bottom:2px;}
+.thread-input-bar{padding:9px 12px;border-top:1px solid var(--border);display:flex;gap:6px;align-items:flex-end;flex-shrink:0;}
+.chat-main-body{display:flex;flex:1;overflow:hidden;min-height:0;}
+/* トピックタグ */
+.topic-tag{display:inline-block;font-size:10px;padding:1px 7px;border-radius:10px;font-weight:700;margin-right:5px;vertical-align:middle;}
+.topic-予約{background:var(--green-l);color:var(--green-d);}
+.topic-ケア{background:var(--amber-l);color:var(--amber);}
+.topic-シフト{background:var(--blue-l,#EBF3FF);color:var(--blue,#3A7CC7);}
+.topic-共有{background:var(--pink-l);color:var(--pink);}
+.reaction-bar{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;}
+.reaction{font-size:11px;padding:2px 7px;border-radius:12px;background:var(--sand-d);cursor:pointer;border:none;font-family:inherit;}
+.reaction:hover{background:var(--green-l);}
+.reaction.reacted{background:var(--green-l);border:1px solid var(--green-m);}
+
+
+/* ── MOBILE / RESPONSIVE FIXES ── */
+html, body { max-width: 100%; overflow-x: hidden; }
+.invoice-wrap { width: min(540px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); }
+.karte-modal { width: min(580px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); }
+.new-chat-wrap { width: min(400px, calc(100vw - 24px)); }
+.invoice-modal { overflow-y: auto; align-items: flex-start; padding: 12px; }
+.karte-detail { overflow-y: auto; align-items: flex-start; padding: 12px; }
+.new-chat-modal { overflow-y: auto; align-items: flex-start; padding: 12px; }
+@media(max-width:480px){
+  .metrics { grid-template-columns: repeat(2,1fr); }
+  .two-col { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+  .inv-doc { padding: 14px; }
+  .inv-doc-header { flex-direction: column; gap: 8px; }
+  .inv-doc-parties { grid-template-columns: 1fr; }
+  .inv-totals { width: 100%; }
+  .kd-grid { grid-template-columns: 1fr; }
+  .sitter-banner-stats { gap: 10px; }
+}
+@media(max-width:640px){
+  .page { padding: 10px 8px; }
+}
+/* Cal cells CSS fix */
+#cal-cells { display: contents; }
+</style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sb-overlay" onclick="closeSb()"></div>
+<aside class="sidebar" id="sidebar">
+  <div class="sb-logo"><div class="logo">🐾 PET MERIT</div><small>チーム管理ダッシュボード</small></div>
+  <div class="nav-sec">メイン</div>
+  <button class="nav-item active" onclick="nav('dashboard',this)"><span class="icon">🏠</span>ダッシュボード</button>
+  <button class="nav-item" onclick="nav('calendar',this)"><span class="icon">📅</span>予約カレンダー</button>
+  <button class="nav-item" onclick="nav('bookings',this)"><span class="icon">📋</span>予約管理<span class="nav-badge">3</span></button>
+  <button class="nav-item" onclick="nav('karte',this)"><span class="icon">🐾</span>ペットカルテ</button>
+  <button class="nav-item" onclick="nav('sales',this)"><span class="icon">💰</span>売上・収益</button>
+  <button class="nav-item" onclick="nav('chat',this)" id="nav-chat"><span class="icon">💬</span>チームチャット<span class="nav-badge" id="chat-badge" style="display:none;">0</span></button>
+  <div class="nav-sec">その他</div>
+  <button class="nav-item" onclick="nav('line',this)"><span class="icon">💚</span>LINE返信AI</button>
+  <button class="nav-item" onclick="nav('reviews',this)"><span class="icon">⭐</span>口コミ管理</button>
+  <button class="nav-item" onclick="nav('settings',this)"><span class="icon">⚙️</span>設定</button>
+  <div class="sb-profile">
+    <div class="sb-profile-label">ログイン中</div>
+    <div class="sb-profile-row" id="sb-profile-row">
+      <div class="sb-av">👥</div>
+      <div><div class="sb-name">チーム全体</div><div class="sb-status">5名稼働中</div></div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="ham" onclick="toggleSb()">☰</button>
+      <div class="topbar-title" id="topbar-title">ダッシュボード</div>
+    </div>
+    <div class="sitter-switcher" id="sw"></div>
+    <div class="topbar-right">
+      <button class="tbtn tbtn-primary hide-sm" onclick="openAddBooking()">＋ 予約</button>
+    </div>
+  </div>
+
+  <div id="page-dashboard" class="page on"><div id="dash-content"></div></div>
+
+  <div id="page-calendar" class="page">
+    <div class="page-sitter-tabs" id="cal-tabs"></div>
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--text-s);">
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--green-l);border:1px solid var(--green-m);margin-right:3px;vertical-align:middle;"></span>お留守番</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--pink-l);border:1px solid var(--pink-m);margin-right:3px;vertical-align:middle;"></span>お泊まり</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--amber-l);border:1px solid #EFC06A;margin-right:3px;vertical-align:middle;"></span>お散歩</span>
+      </div>
+      <div id="cal-sitter-legend" style="display:flex;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--text-s);"></div>
+    </div>
+    <div class="cal-wrap">
+      <div class="cal-header">
+        <button class="cal-nav" onclick="changeMonth(-1)">← 前月</button>
+        <div class="cal-month" id="cal-title"></div>
+        <button class="cal-nav" onclick="changeMonth(1)">翌月 →</button>
+      </div>
+      <div class="cal-grid-full">
+        <div class="cal-dn">月</div><div class="cal-dn">火</div><div class="cal-dn">水</div>
+        <div class="cal-dn">木</div><div class="cal-dn">金</div>
+        <div class="cal-dn" style="color:var(--text-s);">土</div>
+        <div class="cal-dn" style="color:var(--pink);">日</div>
+        <div id="cal-cells" style="display:contents;"></div>
+      </div>
+      <div class="cal-detail" id="cal-detail"><div class="cal-detail-title">日付を選択すると予定が表示されます</div></div>
+    </div>
+
+  </div>
+
+  <div id="page-bookings" class="page">
+    <div class="page-sitter-tabs" id="bk-tabs"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;gap:8px;">
+      <div style="font-size:12px;color:var(--text-s);">2025年6月</div>
+      <button class="tbtn tbtn-primary" style="font-size:12px;padding:5px 11px;" onclick="openAddBooking()">＋ 予約を追加</button>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:3px;" id="bk-filter-row"></div>
+    <div id="b-cards"></div>
+    <div id="add-booking-sheet" class="add-sheet">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px;">
+        <div style="font-size:14px;font-weight:700;">📋 予約を追加</div>
+        <button type="button" onclick="closeAddBooking()" aria-label="閉じる" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-s);min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;">×</button>
+      </div>
+      <div id="ab-step1">
+        <div style="margin-bottom:9px;"><label class="form-label">担当シッター *</label><select id="ab-sitter" class="form-input" style="font-size:16px;"><option value="">選択してください</option></select></div>
+        <div style="margin-bottom:9px;"><label class="form-label">お客様名 *</label><input id="ab-name" class="form-input" placeholder="山田 花子" oninput="onAbNameInput()"></div>
+        <div id="ab-suggest" style="display:none;border:1px solid var(--border);border-radius:var(--radius-s);overflow:hidden;margin-bottom:7px;"></div>
+        <div id="ab-karte-found" style="display:none;background:var(--green-l);border:1px solid var(--green-m);border-radius:var(--radius-s);padding:7px 11px;font-size:12px;color:var(--green-d);margin-bottom:7px;">✓ カルテから情報を自動入力しました</div>
+        <button onclick="proceedToDetail()" style="width:100%;padding:9px;background:var(--green);color:#fff;border:none;border-radius:var(--radius-s);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">次へ → 予約内容を入力</button>
+      </div>
+      <div id="ab-step2" style="display:none;">
+        <div style="background:var(--sand);border-radius:var(--radius-s);padding:7px 10px;font-size:12px;margin-bottom:9px;display:flex;justify-content:space-between;align-items:center;">
+          <span id="ab-name-display" style="font-weight:700;"></span>
+          <button onclick="backToStep1()" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--text-s);">← 戻る</button>
+        </div>
+        <div class="form-grid" style="margin-bottom:8px;">
+          <div><label class="form-label">サービス</label><select id="ab-svc" class="form-input" style="font-size:16px;"><option>お留守番</option><option>お散歩</option><option>お泊まり</option><option>病院付き添い</option></select></div>
+          <div><label class="form-label">日付 *</label><input type="date" id="ab-date" class="form-input"></div>
+          <div><label class="form-label">開始時間</label><input type="time" id="ab-stime" class="form-input" value="10:00"></div>
+          <div><label class="form-label">終了時間</label><input type="time" id="ab-etime" class="form-input" value="18:00"></div>
+          <div><label class="form-label">金額</label><input id="ab-amt" class="form-input" placeholder="16000"></div>
+          <div><label class="form-label">ペット名</label><input id="ab-petname" class="form-input" placeholder="ムギ"></div>
+        </div>
+        <div style="margin-bottom:9px;"><label class="form-label">特記事項</label><textarea id="ab-note" class="form-input" rows="2" style="resize:none;" placeholder="性格・注意事項など"></textarea></div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <button onclick="saveAddBooking(false)" style="width:100%;padding:9px;background:var(--sand);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">予約のみ追加</button>
+          <button onclick="saveAddBooking(true)" style="width:100%;padding:10px;background:var(--green);color:#fff;border:none;border-radius:var(--radius);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">予約追加 ＋ カルテに反映</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="page-karte" class="page">
+    <div class="page-sitter-tabs" id="kt-tabs"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="font-size:12px;color:var(--text-s);" id="kt-summary"></div>
+      <button class="tbtn tbtn-primary">＋ 顧客を追加</button>
+    </div>
+    <div id="karte-list"></div>
+  </div>
+
+  <div id="page-sales" class="page">
+    <div class="page-sitter-tabs" id="sl-tabs"></div>
+    <div id="sales-content"></div>
+  </div>
+
+  <div id="page-chat" class="page" style="padding:0;height:calc(100vh - 54px);overflow:hidden;">
+    <div class="chat-wrap">
+      <!-- ルーム一覧 -->
+      <div class="chat-rooms" id="chat-rooms-panel">
+        <div class="chat-rooms-head">
+          <div class="chat-rooms-title">💬 チームチャット</div>
+          <button class="chat-new-btn" onclick="openNewChatModal()">＋ 新しいチャットを作成</button>
+        </div>
+        <div class="chat-room-list" id="chat-room-list"></div>
+      </div>
+      <!-- チャット本体 -->
+      <div class="chat-main" id="chat-main-area">
+        <div class="chat-header" id="chat-header">
+          <div style="color:var(--text-s);font-size:13px;padding:20px;">← チャットを選択してください</div>
+        </div>
+        <div class="chat-main-body">
+          <div class="chat-messages" id="chat-messages"></div>
+          <div class="thread-panel closed" id="thread-panel">
+            <div class="thread-header">
+              <div style="font-size:13px;font-weight:700;">💬 スレッド</div>
+              <button type="button" onclick="closeThread()" aria-label="閉じる" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text-s);min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;">×</button>
+            </div>
+            <div class="thread-parent" id="thread-parent-msg"></div>
+            <div class="thread-replies" id="thread-replies"></div>
+            <div class="thread-input-bar">
+              <textarea id="thread-input" class="chat-input" rows="1" style="font-size:16px;" placeholder="返信を入力..."></textarea>
+              <button class="chat-send-btn" style="width:32px;height:32px;font-size:13px;" onclick="sendThreadReply()">➤</button>
+            </div>
+          </div>
+        </div>
+        <div class="chat-input-bar" id="chat-input-bar" style="display:none;">
+          <div style="display:flex;flex-direction:column;gap:5px;flex:1;">
+            <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
+              <button class="chat-ai-btn" onclick="chatAISuggest()">✨ AI文章提案</button>
+              <select id="chat-topic-select" style="font-size:16px;padding:3px 8px;border-radius:12px;border:1px solid var(--border);font-family:inherit;color:var(--text-m);">
+                <option value="">タグなし</option>
+                <option value="予約">📋 予約</option>
+                <option value="ケア">🐾 ケア</option>
+                <option value="シフト">📅 シフト</option>
+                <option value="共有">📌 共有</option>
+              </select>
+              <div id="chat-ai-suggest" style="font-size:11px;color:var(--text-s);"></div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:flex-end;">
+              <textarea id="chat-input" class="chat-input" rows="1" style="font-size:16px;" placeholder="メッセージを入力..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMsg();}"></textarea>
+              <button class="chat-send-btn" onclick="sendChatMsg()">➤</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- 新規チャット作成モーダル -->
+    <div class="new-chat-modal" id="new-chat-modal" onclick="if(event.target===this)closeNewChatModal()">
+      <div class="new-chat-wrap">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);">
+          <div style="font-size:14px;font-weight:700;">＋ 新しいチャットを作成</div>
+          <button onclick="closeNewChatModal()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-s);">×</button>
+        </div>
+        <div style="padding:16px;">
+          <div style="margin-bottom:11px;"><label class="form-label">チャット名</label><input id="new-chat-name" class="form-input" placeholder="例：週次ミーティング、緊急連絡など"></div>
+          <div style="margin-bottom:11px;"><label class="form-label">種類</label>
+            <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:4px;" id="new-chat-type-btns">
+              <button class="tbtn active" onclick="selChatType(this,'general')" style="font-size:12px;">📢 全体</button>
+              <button class="tbtn" onclick="selChatType(this,'urgent')" style="font-size:12px;">🚨 緊急</button>
+              <button class="tbtn" onclick="selChatType(this,'schedule')" style="font-size:12px;">📅 シフト調整</button>
+              <button class="tbtn" onclick="selChatType(this,'care')" style="font-size:12px;">🐾 ケア共有</button>
+            </div>
+          </div>
+          <div style="margin-bottom:14px;"><label class="form-label">参加メンバー</label>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;" id="new-chat-members"></div>
+          </div>
+          <button onclick="createNewChat()" style="width:100%;padding:10px;background:var(--green);color:#fff;border:none;border-radius:var(--radius);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">作成する</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="page-line" class="page">
+    <div style="font-size:13px;color:var(--text-m);margin-bottom:12px;line-height:1.8;">LINEメッセージを入力すると、AIが<strong>返信文を自動生成</strong>します。</div>
+    <div class="line-demo">
+      <div class="line-left">
+        <div class="line-sec-title">📨 シナリオを選ぶ</div>
+        <div class="line-scenario" id="line-scenarios"></div>
+        <div class="line-sec-title" style="margin-top:10px;">✏️ または自由入力</div>
+        <div class="line-input-area">
+          <textarea id="line-input" style="font-size:16px;" placeholder="お客様からのメッセージをここに入力..."></textarea>
+          <button class="line-gen-btn" onclick="genLineReply()">✨ 返信文を生成する</button>
+        </div>
+        <div id="line-output-area" style="margin-top:7px;"></div>
+      </div>
+      <div class="line-right">
+        <div class="line-sec-title">📱 LINEイメージ</div>
+        <div class="line-phone">
+          <div class="line-phone-header"><div class="line-phone-name">🐾 PET MERIT チーム</div><div class="line-phone-sub">公式アカウント</div></div>
+          <div class="line-chat" id="line-chat">
+            <div class="line-msg line-msg-recv"><div class="line-recv-av">🐶</div><div><div class="line-bubble" id="line-recv-bubble">ここに受信メッセージが表示されます</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="page-reviews" class="page">
+    <div class="page-sitter-tabs" id="rv-tabs"></div>
+    <div id="reviews-content"></div>
+  </div>
+
+  <div id="page-settings" class="page">
+    <div class="page-sitter-tabs" id="st-tabs"></div>
+    <div id="settings-content"></div>
+  </div>
+
+  <div class="invoice-modal" id="invoice-modal" onclick="if(event.target===this)closeInvoice()">
+    <div class="invoice-wrap">
+      <div class="inv-toolbar">
+        <div style="font-size:14px;font-weight:700;" id="inv-modal-title">見積もり書</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <button class="inv-btn inv-btn-primary" onclick="printInvoice()">🖨️ 印刷 / PDF</button>
+          <button type="button" class="inv-close" onclick="closeInvoice()" aria-label="閉じる" style="min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;">×</button>
+        </div>
+      </div>
+      <div id="inv-doc-content"></div>
+    </div>
+  </div>
+</main>
+
+<div class="karte-detail" id="karte-detail" onclick="if(event.target===this)closeKarte()">
+  <div class="karte-modal" id="karte-modal"></div>
+</div>
+
+<script>
+
+const SITTERS=[
+  {id:'saori',name:'さおり',emoji:'👩',area:'渋谷区・世田谷区',color:'#2A7C5F',colorL:'#E8F5F0',specialty:'小型犬・猫専門',rating:4.9,reviews:127,email:'saori@example.com'},
+  {id:'yuki', name:'ゆき', emoji:'👱\u200d♀️',area:'新宿区・中野区', color:'#E05A7A',colorL:'#FDEEF3',specialty:'大型犬・しつけ',rating:4.8,reviews:84, email:'yuki@example.com'},
+  {id:'hana', name:'はな', emoji:'🧑\u200d🦱',area:'港区・品川区',   color:'#C47D1E',colorL:'#FEF3E2',specialty:'猫・小動物専門',rating:4.9,reviews:62, email:'hana@example.com'},
+  {id:'ren',  name:'れん', emoji:'👦',  area:'豊島区・北区',   color:'#3A7CC7',colorL:'#EBF3FF',specialty:'訓練士資格',    rating:4.7,reviews:45, email:'ren@example.com'},
+  {id:'moe',  name:'もえ', emoji:'👩\u200d🦰',area:'文京区・台東区', color:'#7B5EA7',colorL:'#F0EBFF',specialty:'シニア犬専門',  rating:4.9,reviews:38, email:'moe@example.com'},
+];
+const BOOKINGS=[
+  {id:1, sitter:'saori',name:'山田 花子',pet:'ムギ（トイプードル・3歳）',svc:'お留守番（8h）',date:'2025/6/13',time:'10:00〜18:00',amt:16000,status:'inprogress'},
+  {id:2, sitter:'saori',name:'佐藤 美佳',pet:'チョコ（チワワ・5歳）投薬あり',svc:'お留守番',date:'2025/6/18',time:'10:00〜17:00',amt:0,status:'new'},
+  {id:3, sitter:'yuki', name:'中村 健太',pet:'ソラ・リン（柴犬×2）',svc:'お泊まり（2泊）',date:'2025/6/20〜22',time:'終日',amt:0,status:'new'},
+  {id:4, sitter:'saori',name:'田中 美咲',pet:'ハナ（ポメラニアン・2歳）',svc:'お散歩',date:'2025/6/13',time:'15:00〜15:30',amt:1500,status:'confirmed'},
+  {id:5, sitter:'saori',name:'鈴木 一郎',pet:'モコ・チョコ（猫×2）',svc:'お泊まり（1泊）',date:'2025/6/13',time:'18:00〜',amt:8000,status:'confirmed'},
+  {id:6, sitter:'saori',name:'高橋 あや',pet:'プリン（マルチーズ）',svc:'お留守番（6h）',date:'2025/6/8',time:'10:00〜16:00',amt:12000,status:'done'},
+  {id:7, sitter:'yuki', name:'木村 拓海',pet:'レオ（ゴールデン・5歳）',svc:'お散歩',date:'2025/6/14',time:'09:00〜09:45',amt:1500,status:'confirmed'},
+  {id:8, sitter:'hana', name:'林 奈々',  pet:'シロ・クロ（猫×2）',svc:'お留守番（2日）',date:'2025/6/15〜16',time:'朝・夕',amt:14000,status:'confirmed'},
+  {id:9, sitter:'hana', name:'松本 涼子',pet:'ピース（ウサギ）',svc:'お留守番',date:'2025/6/17',time:'10:00〜15:00',amt:8000,status:'new'},
+  {id:10,sitter:'ren',  name:'清水 大輝',pet:'マル（柴犬・1歳）',svc:'お散歩＋しつけ',date:'2025/6/13',time:'10:00〜11:00',amt:3000,status:'inprogress'},
+  {id:11,sitter:'moe',  name:'加藤 久美子',pet:'チョコ（ビーグル・11歳）',svc:'シニアケア',date:'2025/6/14',time:'10:00〜16:00',amt:12000,status:'confirmed'},
+  {id:12,sitter:'ren',  name:'伊藤 健太',pet:'クロ（黒猫）',svc:'病院付き添い',date:'2025/6/5',time:'14:00〜17:00',amt:9000,status:'done'},
+];
+const KARTES=[
+  {id:1,emoji:'🐩',bg:'#E8F5F0',name:'ムギ',owner:'山田 花子',sitter:'saori',ownerPhone:'090-1234-5678',breed:'トイプードル',age:'3歳',sex:'オス',weight:'4.2kg',food:'ロイヤルカナン 100g/1日2回',ac:'夏27℃・冬22℃',med:'なし',allergy:'なし',vet:'渋谷どうぶつ病院',note:'分離不安あり。慣れると甘えん坊。',care:['ご飯（16:00）100g','水替え','散歩30分'],history:[{date:'6/13',content:'お留守番8h。完食、散歩30分。'},{date:'5/20',content:'お留守番6h。問題なし。'}]},
+  {id:2,emoji:'😺',bg:'#FEF3E2',name:'チョコ',owner:'佐藤 美佳',sitter:'saori',ownerPhone:'090-2345-6789',breed:'チワワ',age:'5歳',sex:'メス',weight:'2.5kg',food:'ヒルズ 50g/1日2回',ac:'夏26℃・冬23℃',med:'1日1回（朝）心臓の薬',allergy:'鶏肉アレルギー',vet:'目黒ペットクリニック',note:'知らない人に慣れるまで時間がかかる。投薬必須。',care:['ご飯（10:00・17:00）50g','投薬（フードに混ぜる）','水替え'],history:[{date:'5/5',content:'お留守番5h。投薬問題なし。'}]},
+  {id:3,emoji:'🐕',bg:'#E6F1FB',name:'レオ',owner:'木村 拓海',sitter:'yuki',ownerPhone:'090-3456-7890',breed:'ゴールデンレトリバー',age:'5歳',sex:'オス',weight:'28kg',food:'大型犬用プロプラン 250g/1日2回',ac:'夏25℃',med:'なし',allergy:'なし',vet:'新宿動物病院',note:'元気いっぱい。他の犬とフレンドリー。',care:['ご飯（7:00・17:00）','散歩45分'],history:[{date:'6/14',content:'散歩45分。元気。'}]},
+  {id:4,emoji:'🐈',bg:'#FEF3E2',name:'シロ',owner:'林 奈々',sitter:'hana',ownerPhone:'090-4567-8901',breed:'日本猫',age:'4歳',sex:'メス（避妊済み）',weight:'3.8kg',food:'ロイヤルカナン インドア 50g/1日2回',ac:'夏26℃',med:'なし',allergy:'なし',vet:'品川キャットクリニック',note:'人懐っこい。クロと仲良し。',care:['ご飯2回','水替え','トイレ掃除1日2回'],history:[{date:'6/15',content:'お留守番2日。問題なし。'}]},
+  {id:5,emoji:'🐕',bg:'#E6F9F0',name:'マル',owner:'清水 大輝',sitter:'ren',ownerPhone:'090-5678-9012',breed:'柴犬',age:'1歳',sex:'オス',weight:'7.2kg',food:'ニュートロ 120g/1日2回',ac:'夏26℃・冬22℃',med:'なし',allergy:'なし',vet:'池袋動物病院',note:'子犬で元気いっぱい。しつけ中。',care:['ご飯2回','散歩30分（訓練含む）'],history:[{date:'6/13',content:'散歩＋しつけ1h。スワレ習得中。'}]},
+  {id:6,emoji:'🐕‍🦺',bg:'#EBF3FF',name:'チョコ',owner:'加藤 久美子',sitter:'moe',ownerPhone:'090-6789-0123',breed:'ビーグル',age:'11歳',sex:'オス（去勢済み）',weight:'12.5kg',food:'シニア用ロイヤルカナン 130g/1日2回',ac:'夏27℃・冬23℃',med:'関節サプリ（朝食後）',allergy:'なし',vet:'本郷動物病院',note:'シニアで動きはゆっくり。短い散歩が好き。',care:['ご飯2回','サプリ（朝）','散歩15分'],history:[{date:'6/14',content:'シニアケア6h。食欲あり。'}]},
+];
+const CAL_EVENTS={
+  13:[
+    {time:'10:00〜18:00',name:'山田 花子',pet:'ムギ（トイプードル）',svc:'お留守番',type:'ev-g',status:'p-inprogress',sitter:'saori'},
+    {time:'15:00〜15:30',name:'田中 美咲',pet:'ハナ（ポメラニアン）',svc:'お散歩',type:'ev-a',status:'p-confirmed',sitter:'saori'},
+    {time:'18:00〜',name:'鈴木 一郎',pet:'モコ・チョコ（猫×2）',svc:'お泊まり1日目',type:'ev-p',status:'p-confirmed',sitter:'saori'},
+    {time:'10:00〜11:00',name:'清水 大輝',pet:'マル（柴犬）',svc:'散歩＋しつけ',type:'ev-a',status:'p-inprogress',sitter:'ren'},
+  ],
+  14:[
+    {time:'終日',name:'鈴木 一郎',pet:'モコ・チョコ（猫×2）',svc:'お泊まり2日目',type:'ev-p',status:'p-confirmed',sitter:'saori'},
+    {time:'09:00〜09:45',name:'木村 拓海',pet:'レオ（ゴールデン）',svc:'お散歩',type:'ev-a',status:'p-confirmed',sitter:'yuki'},
+    {time:'10:00〜16:00',name:'加藤 久美子',pet:'チョコ（ビーグル）',svc:'シニアケア',type:'ev-g',status:'p-confirmed',sitter:'moe'},
+  ],
+  15:[
+    {time:'〜12:00',name:'鈴木 一郎',pet:'モコ・チョコ（猫×2）',svc:'お泊まり最終日',type:'ev-p',status:'p-confirmed',sitter:'saori'},
+    {time:'終日',name:'林 奈々',pet:'シロ・クロ（猫×2）',svc:'お留守番2日目',type:'ev-g',status:'p-confirmed',sitter:'hana'},
+  ],
+  17:[{time:'10:00〜15:00',name:'松本 涼子',pet:'ピース（ウサギ）',svc:'お留守番',type:'ev-g',status:'p-new',sitter:'hana'}],
+  18:[{time:'10:00〜17:00',name:'佐藤 美佳',pet:'チョコ（チワワ）',svc:'お留守番',type:'ev-g',status:'p-new',sitter:'saori'}],
+  20:[{time:'終日',name:'中村 健太',pet:'ソラ・リン（柴犬×2）',svc:'お泊まり1日目',type:'ev-p',status:'p-new',sitter:'yuki'}],
+  21:[{time:'終日',name:'中村 健太',pet:'ソラ・リン（柴犬×2）',svc:'お泊まり2日目',type:'ev-p',status:'p-new',sitter:'yuki'}],
+  22:[{time:'〜12:00',name:'中村 健太',pet:'ソラ・リン（柴犬×2）',svc:'お泊まり最終日',type:'ev-p',status:'p-new',sitter:'yuki'}],
+  25:[{time:'10:00〜16:00',name:'高橋 あや',pet:'プリン（マルチーズ）',svc:'お留守番',type:'ev-g',status:'p-confirmed',sitter:'saori'}],
+};
+const SALES={
+  saori:{monthly:[128000,145000,152000,161000,164700,184500],services:{'お留守番':92000,'お泊まり':56000,'お散歩':27500,'病院付き添い':9000}},
+  yuki: {monthly:[95000,108000,112000,118000,125000,137500],services:{'お留守番':55000,'お泊まり':42000,'お散歩':32000,'病院付き添い':8500}},
+  hana: {monthly:[72000,84000,89000,95000,98000,112000],services:{'お留守番':67000,'お泊まり':28000,'お散歩':12000,'病院付き添い':5000}},
+  ren:  {monthly:[48000,55000,62000,68000,74000,89000],services:{'お留守番':35000,'お泊まり':18000,'お散歩':24000,'病院付き添い':12000}},
+  moe:  {monthly:[38000,44000,52000,58000,64000,76000],services:{'お留守番':52000,'お泊まり':16000,'お散歩':5000,'病院付き添い':3000}},
+};
+const REVIEWS={
+  saori:[{name:'山田 花子',stars:5,date:'6/10',text:'ムギをとても丁寧に見てくださいました。また絶対お願いします！'},{name:'田中 美咲',stars:5,date:'6/8',text:'ハナがいつも楽しそうに散歩に行きます。'}],
+  yuki: [{name:'木村 拓海',stars:5,date:'6/12',text:'大型犬でも安心して任せられます。'},  {name:'中村 健太',stars:4,date:'5/28',text:'2匹の柴犬も問題なく対応してもらえました。'}],
+  hana: [{name:'林 奈々',stars:5,date:'6/11',text:'猫2匹を丁寧にケアしてもらえました。写真送付も嬉しかった！'}],
+  ren:  [{name:'清水 大輝',stars:5,date:'6/13',text:'訓練士資格があるだけあってしつけが上手！マルがどんどん成長してます。'}],
+  moe:  [{name:'加藤 久美子',stars:5,date:'6/14',text:'シニア犬への気配りが素晴らしかった。'}],
+};
+const MJ=['1月','2月','3月','4月','5月','6月'];
+const SL={new:'新規',confirmed:'確定',inprogress:'進行中',done:'完了'};
+const SC={new:'p-new',confirmed:'p-confirmed',inprogress:'p-inprogress',done:'p-done'};
+
+// STATE
+let cur='team', calYear=2025, calMonth=5, selDay=null;
+let calF='team', bkF='team', bkS='month', ktF='team', slF='team', rvF='team', stF='saori';
+
+// HELPERS
+const gs=id=>SITTERS.find(s=>s.id===id);
+function chip(s,label){
+  label=label||s.name;
+  return `<span class="sc-chip" style="background:${s.colorL};">
+    <span style="width:16px;height:16px;border-radius:50%;background:${s.colorL};display:inline-flex;align-items:center;justify-content:center;font-size:10px;">${s.emoji}</span>
+    <span style="font-size:11px;font-weight:700;color:${s.color};">${label}</span>
+  </span>`;
+}
+function tabs(containerId, stateVar, teamLabel, cb, showTeam){
+  showTeam = showTeam !== false;
+  const el=document.getElementById(containerId); if(!el)return;
+  const cv=window[stateVar];
+  let h='';
+  if(showTeam){
+    const a=cv==='team';
+    h+=`<button class="pst-btn${a?' active':''}" onclick="${cb}('team')" style="background:${a?'var(--green)':'var(--white)'};color:${a?'#fff':'var(--text-m)'};border-color:${a?'var(--green)':'var(--border)'};">👥 ${teamLabel}</button>`;
+  }
+  SITTERS.forEach(s=>{
+    const a=cv===s.id;
+    h+=`<button class="pst-btn${a?' active':''}" onclick="${cb}('${s.id}')" style="background:${a?s.colorL:'var(--white)'};border-color:${a?s.color:'var(--border)'};color:${a?s.color:'var(--text-m)'};">
+      <span style="width:16px;height:16px;border-radius:50%;background:${s.colorL};display:inline-flex;align-items:center;justify-content:center;font-size:10px;">${s.emoji}</span>
+      ${s.name}
+    </button>`;
+  });
+  el.innerHTML=h;
+}
+
+// SWITCHER
+function buildSW(){
+  const el=document.getElementById('sw');
+  let h=`<button class="sw-btn team${cur==='team'?' active':''}" onclick="setSitter('team')">👥 全体</button>`;
+  SITTERS.forEach(s=>{
+    const a=cur===s.id;
+    h+=`<button class="sw-btn${a?' active':''}" onclick="setSitter('${s.id}')" style="${a?`background:${s.colorL};color:${s.color};`:''}">${s.emoji} ${s.name}</button>`;
+  });
+  el.innerHTML=h;
+}
+function setSitter(id){
+  cur=id; buildSW();
+  const pr=document.getElementById('sb-profile-row');
+  if(id==='team'){
+    pr.innerHTML='<div class="sb-av">👥</div><div><div class="sb-name">チーム全体</div><div class="sb-status">5名稼働中</div></div>';
+  } else {
+    const s=gs(id);
+    pr.innerHTML=`<div class="sb-av" style="background:${s.colorL};">${s.emoji}</div><div><div class="sb-name">${s.name}</div><div class="sb-status" style="color:${s.color};">● 受付中</div></div>`;
+  }
+  const pg=document.querySelector('.page.on');
+  if(pg) refreshPage(pg.id.replace('page-',''));
+}
+function refreshPage(pid){
+  const map={
+    dashboard:()=>renderDash(),
+    calendar:()=>{calF=cur;tabs('cal-tabs','calF','全シッター','setCalF');renderCal();},
+    bookings:()=>{bkF=cur;tabs('bk-tabs','bkF','全シッター','setBkF');renderBk();},
+    karte:()=>{ktF=cur;tabs('kt-tabs','ktF','全シッター','setKtF');renderKt();},
+    sales:()=>{slF=cur;tabs('sl-tabs','slF','チーム合算','setSlF');renderSl();},
+    reviews:()=>{rvF=cur;tabs('rv-tabs','rvF','全シッター','setRvF');renderRv();},
+    settings:()=>{stF=cur==='team'?'saori':cur;tabs('st-tabs','stF','','setStF',false);renderSt();},
+  };
+  if(map[pid]) map[pid]();
+}
+
+// NAV
+function nav(id,btn){
+  // Close open overlays on page navigation
+  const _ab=document.getElementById('add-booking-sheet');
+  if(_ab&&_ab.classList.contains('open')) closeAddBooking();
+  const _nm=document.getElementById('new-chat-modal');
+  if(_nm&&_nm.style.display==='flex') closeNewChatModal();
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.getElementById('page-'+id).classList.add('on');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  else document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+id+"'"))n.classList.add('active');});
+  const T={dashboard:'ダッシュボード',calendar:'予約カレンダー',bookings:'予約管理',karte:'ペットカルテ',sales:'売上・収益',chat:'チームチャット',line:'LINE返信AI',reviews:'口コミ管理',settings:'設定'};
+  document.getElementById('topbar-title').textContent=T[id]||'';
+  // チャットページではスイッチャーを非表示
+  document.getElementById('sw').style.display = (id==='chat') ? 'none' : '';
+  closeSb();
+  if(id==='line') renderLineSC();
+  else if(id==='chat') initChat();
+  else refreshPage(id);
+}
+function toggleSb(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sb-overlay').classList.toggle('on');}
+function closeSb(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sb-overlay').classList.remove('on');}
+
+// DASHBOARD
+function renderDash(){
+  const el=document.getElementById('dash-content');
+  if(cur==='team'){
+    const ts=SITTERS.reduce((s,x)=>s+SALES[x.id].monthly[5],0);
+    const newB=BOOKINGS.filter(b=>b.status==='new').length;
+    const avgR=(SITTERS.reduce((s,x)=>s+x.rating,0)/SITTERS.length).toFixed(1);
+    const todayEvs=CAL_EVENTS[13]||[];
+    el.innerHTML=`
+      <div class="team-banner">
+        <div><div style="font-size:15px;font-weight:700;">👥 チーム全体ビュー</div><div style="font-size:11px;opacity:.85;margin-top:2px;">5名のシッターをまとめて管理</div></div>
+        <div style="display:flex;">${SITTERS.map(s=>`<div style="width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.4);background:rgba(255,255,255,.15);display:inline-flex;align-items:center;justify-content:center;font-size:14px;margin-left:-5px;">${s.emoji}</div>`).join('')}</div>
+      </div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-lbl">今月の総売上</div><div class="metric-val">¥${ts.toLocaleString()}</div><div class="metric-sub"><span class="up">↑ 12%</span> 先月比</div></div>
+        <div class="metric"><div class="metric-lbl">総依頼数</div><div class="metric-val">${BOOKINGS.length}件</div><div class="metric-sub">5名合計</div></div>
+        <div class="metric"><div class="metric-lbl">対応待ち</div><div class="metric-val" style="color:var(--pink);">${newB}件</div><div class="metric-sub">全シッター計</div></div>
+        <div class="metric"><div class="metric-lbl">チーム平均評価</div><div class="metric-val">${avgR}</div><div class="metric-sub">★ ${SITTERS.reduce((s,x)=>s+x.reviews,0)}件</div></div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-head"><div class="card-title">👥 シッター別今月売上</div><button class="card-link" onclick="nav('sales',null)">詳細 →</button></div>
+          ${SITTERS.map(s=>{const v=SALES[s.id].monthly[5];const max=Math.max(...SITTERS.map(x=>SALES[x.id].monthly[5]));
+            return `<div class="team-row" onclick="setSitter('${s.id}');nav('sales',null)">
+              <div class="team-row-av" style="background:${s.colorL};">${s.emoji}</div>
+              <div style="min-width:44px;"><div style="font-size:13px;font-weight:700;">${s.name}</div><div style="font-size:10px;color:var(--text-s);">${s.area}</div></div>
+              <div style="flex:1;margin:0 10px;"><div style="background:var(--sand-d);border-radius:3px;height:5px;overflow:hidden;"><div style="width:${Math.round(v/max*100)}%;height:100%;background:${s.color};border-radius:3px;"></div></div></div>
+              <div style="font-size:12px;font-weight:700;color:${s.color};min-width:48px;text-align:right;">¥${(v/1000).toFixed(0)}K</div>
+            </div>`;}).join('')}
+        </div>
+        <div>
+          <div class="card">
+            <div class="card-head"><div class="card-title">🆕 新着依頼</div><button class="card-link" onclick="nav('bookings',null)">すべて →</button></div>
+            ${BOOKINGS.filter(b=>b.status==='new').slice(0,3).map(b=>{const s=gs(b.sitter);return `<div style="padding:9px 0;border-bottom:1px solid var(--border);">
+              <div style="display:flex;justify-content:space-between;margin-bottom:2px;"><div style="font-size:13px;font-weight:700;">${b.name}</div><span class="pill p-new">新規</span></div>
+              <div style="font-size:11px;color:var(--text-s);margin-bottom:4px;">${b.date} ｜ ${b.svc}</div>
+              ${s?chip(s):''}
+            </div>`;}).join('')}
+          </div>
+          <div class="card">
+            <div class="card-head"><div class="card-title">📅 本日の予定（6/13）</div><button class="card-link" onclick="nav('calendar',null)">カレンダー →</button></div>
+            <div class="tl">${todayEvs.map((e,i,arr)=>{const s=gs(e.sitter);return `<div class="tl-item">
+              <div class="tl-left"><div class="tl-dot" style="background:${s?s.color:'var(--green)'}"></div>${i<arr.length-1?'<div class="tl-line"></div>':''}</div>
+              <div><div class="tl-title">${e.name} — ${e.svc}<span class="tl-sitter" style="background:${s?s.colorL:'var(--green-l)'};color:${s?s.color:'var(--green-d)'};">${s?s.emoji+s.name:'—'}</span></div>
+              <div class="tl-sub">${e.time} ｜ ${e.pet}</div></div>
+            </div>`;}).join('')}</div>
+          </div>
+        </div>
+      </div>`;
+  } else {
+    const s=gs(cur);
+    const myB=BOOKINGS.filter(b=>b.sitter===cur);
+    const newB=myB.filter(b=>b.status==='new').length;
+    const sales=SALES[cur].monthly[5];
+    const todayEvs=(CAL_EVENTS[13]||[]).filter(e=>e.sitter===cur);
+    el.innerHTML=`
+      <div class="sitter-banner">
+        <div class="sitter-banner-av" style="background:${s.colorL};">${s.emoji}</div>
+        <div><div style="font-size:15px;font-weight:700;">${s.name}</div><div style="font-size:11px;color:var(--text-s);">${s.specialty} ／ ${s.area}</div></div>
+        <div class="sitter-banner-stats">
+          <div class="sitter-stat"><div class="sitter-stat-val" style="color:${s.color};">¥${(sales/1000).toFixed(0)}K</div><div class="sitter-stat-lbl">今月売上</div></div>
+          <div class="sitter-stat"><div class="sitter-stat-val" style="color:${s.color};">${myB.length}</div><div class="sitter-stat-lbl">今月件数</div></div>
+          <div class="sitter-stat"><div class="sitter-stat-val" style="color:${s.color};">${s.rating}</div><div class="sitter-stat-lbl">評価</div></div>
+        </div>
+      </div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-lbl">今月の売上</div><div class="metric-val" style="color:${s.color};">¥${sales.toLocaleString()}</div><div class="metric-sub"><span class="up">↑ 12%</span> 先月比</div></div>
+        <div class="metric"><div class="metric-lbl">今月の依頼</div><div class="metric-val">${myB.length}件</div><div class="metric-sub">対応中・確定含む</div></div>
+        <div class="metric"><div class="metric-lbl">対応待ち</div><div class="metric-val" style="color:var(--pink);">${newB}件</div><div class="metric-sub">見積もり未送信</div></div>
+        <div class="metric"><div class="metric-lbl">評価</div><div class="metric-val">${s.rating}</div><div class="metric-sub">★ ${s.reviews}件</div></div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-head"><div class="card-title">📅 本日の予定（6/13）</div><button class="card-link" onclick="nav('calendar',null)">カレンダー →</button></div>
+          ${todayEvs.length?`<div class="tl">${todayEvs.map((e,i,arr)=>`<div class="tl-item"><div class="tl-left"><div class="tl-dot" style="background:${s.color}"></div>${i<arr.length-1?'<div class="tl-line"></div>':''}</div><div><div class="tl-title">${e.name} — ${e.svc}</div><div class="tl-sub">${e.time} ｜ ${e.pet}</div></div></div>`).join('')}</div>`
+          :'<div style="color:var(--text-s);font-size:13px;padding:10px 0;">本日の予定はありません</div>'}
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">🆕 新着依頼</div><button class="card-link" onclick="nav('bookings',null)">すべて →</button></div>
+          ${myB.filter(b=>b.status==='new').length?myB.filter(b=>b.status==='new').map(b=>`<div style="border:1px solid var(--pink-m);border-radius:var(--radius);padding:11px;margin-bottom:7px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:3px;"><div style="font-size:13px;font-weight:700;">${b.name}</div><span class="pill p-new">新規</span></div>
+            <div style="font-size:11px;color:var(--text-s);margin-bottom:7px;">${b.date} ｜ ${b.svc}</div>
+            <button class="tbtn tbtn-primary" style="font-size:11px;padding:4px 11px;" onclick="showInvoice('estimate','${b.name}','${b.svc.split('（')[0]}','${b.pet}')">✨ 見積もり生成</button>
+          </div>`).join(''):'<div style="color:var(--text-s);font-size:13px;padding:10px 0;">新着依頼はありません</div>'}
+        </div>
+      </div>`;
+  }
+}
+
+// CALENDAR
+function setCalF(id){calF=id;tabs('cal-tabs','calF','全シッター','setCalF');renderCal();}
+function renderCal(){
+  updateCalLegend();
+  document.getElementById('cal-title').textContent=`${calYear}年 ${MJ[calMonth]}`;
+  const fd=new Date(calYear,calMonth,1).getDay();
+  const off=fd===0?6:fd-1;
+  const dim=new Date(calYear,calMonth+1,0).getDate();
+  const pd=new Date(calYear,calMonth,0).getDate();
+  const con=document.getElementById('cal-cells');
+  let h='';
+  for(let i=0;i<off;i++) h+=`<div class="cal-cell other-month"><div class="cal-cell-num">${pd-off+1+i}</div></div>`;
+  for(let d=1;d<=dim;d++){
+    const isT=(calYear===2025&&calMonth===5&&d===13);
+    const isSel=selDay===d;
+    let evs=(CAL_EVENTS[d]||[]);
+    if(calF!=='team') evs=evs.filter(e=>e.sitter===calF);
+    let evH=evs.slice(0,2).map(e=>{const s=gs(e.sitter);const bg=s?s.colorL:'var(--green-l)';const col=s?s.color:'var(--green-d)';return `<div class="cal-ev" style="background:${bg};color:${col};">${e.name.split(' ')[0]}</div>`;}).join('');
+    if(evs.length>2) evH+=`<div class="cal-ev" style="background:var(--sand-d);color:var(--text-s);">+${evs.length-2}件</div>`;
+    h+=`<div class="cal-cell ${isT?'today':''} ${isSel?'selected':''}" onclick="selD(${d})"><div class="cal-cell-num">${d}</div>${evH}</div>`;
+  }
+  const tot=off+dim; const rem=tot%7===0?0:7-tot%7;
+  for(let i=1;i<=rem;i++) h+=`<div class="cal-cell other-month"><div class="cal-cell-num">${i}</div></div>`;
+  con.innerHTML=h;
+  if(selDay) showDayDet(selDay);
+  else document.getElementById('cal-detail').innerHTML='<div class="cal-detail-title">日付を選択すると予定が表示されます</div>';
+}
+function selD(d){selDay=d;renderCal();}
+function showDayDet(d){
+  let evs=(CAL_EVENTS[d]||[]);
+  if(calF!=='team') evs=evs.filter(e=>e.sitter===calF);
+  const det=document.getElementById('cal-detail');
+  if(!evs.length){det.innerHTML=`<div class="cal-detail-title">${calMonth+1}月${d}日 — 予定なし</div>`;return;}
+  det.innerHTML=`<div class="cal-detail-title">${calMonth+1}月${d}日の予定（${evs.length}件）</div>`+evs.map(e=>{
+    const s=gs(e.sitter);
+    return `<div class="cal-ev-item"><div class="cal-ev-time">${e.time}</div><div><div class="cal-ev-name">${e.name}</div><div class="cal-ev-sub">${e.svc} ｜ ${e.pet}</div></div>${s?`<span class="cal-ev-sitter" style="background:${s.colorL};color:${s.color};">${s.emoji} ${s.name}</span>`:''}</div>`;
+  }).join('');
+}
+function updateCalLegend(){
+  const el=document.getElementById('cal-sitter-legend');
+  if(!el)return;
+  if(calF==='team'){
+    el.style.display='flex';
+    el.innerHTML='<span style="font-weight:700;color:var(--text-m);">シッター凡例:</span>'+SITTERS.map(s=>`<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${s.color};margin-right:4px;vertical-align:middle;"></span>${s.name}</span>`).join('');
+  } else {
+    el.style.display='none';
+  }
+}
+function changeMonth(dir){calMonth+=dir;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}selDay=null;renderCal();}
+
+// BOOKINGS
+function setBkF(id){bkF=id;tabs('bk-tabs','bkF','全シッター','setBkF');renderBk();}
+function renderBk(){
+  let list=BOOKINGS;
+  if(bkF!=='team') list=list.filter(b=>b.sitter===bkF);
+  const cnt={month:list.length,new:list.filter(b=>b.status==='new').length,confirmed:list.filter(b=>b.status==='confirmed').length,inprogress:list.filter(b=>b.status==='inprogress').length,done:list.filter(b=>b.status==='done').length};
+  const fr=document.getElementById('bk-filter-row');
+  fr.innerHTML=[{k:'month',l:'今月'},{k:'new',l:'新規'},{k:'confirmed',l:'確定'},{k:'inprogress',l:'進行中'},{k:'done',l:'完了'}].map(x=>{
+    const a=bkS===x.k;
+    return `<button class="tbtn${a?' tbtn-primary':''}" onclick="setBkS('${x.k}')" style="white-space:nowrap;flex-shrink:0;">${x.l}（${cnt[x.k]}）</button>`;
+  }).join('');
+  if(bkS!=='month') list=list.filter(b=>b.status===bkS);
+  const el=document.getElementById('b-cards');
+  if(!list.length){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text-s);">該当する予約はありません</div>';return;}
+  el.innerHTML=list.map(b=>{
+    const s=gs(b.sitter);
+    const hasPet=KARTES.some(k=>k.owner===b.name);
+    return `<div class="booking-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:7px;">
+        <div><div style="font-size:14px;font-weight:700;">🐾 ${b.name}</div><div style="font-size:11px;color:var(--text-s);margin-top:1px;">${b.pet}</div></div>
+        <span class="pill ${SC[b.status]}">${SL[b.status]}</span>
+      </div>
+      ${bkF==='team'&&s?chip(s):''}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:9px;">
+        <div style="background:var(--sand);border-radius:var(--radius-s);padding:6px 9px;"><div style="font-size:10px;color:var(--text-s);">サービス</div><div style="font-size:12px;font-weight:700;">${b.svc}</div></div>
+        <div style="background:var(--sand);border-radius:var(--radius-s);padding:6px 9px;"><div style="font-size:10px;color:var(--text-s);">金額</div><div style="font-size:13px;font-weight:700;color:var(--green);">${b.amt?'¥'+b.amt.toLocaleString():'未確定'}</div></div>
+        <div style="background:var(--sand);border-radius:var(--radius-s);padding:6px 9px;grid-column:1/-1;"><div style="font-size:10px;color:var(--text-s);">日時</div><div style="font-size:12px;font-weight:500;">${b.date}　${b.time}</div></div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        ${hasPet?`<button class="tbtn" onclick="openKarteByOwner('${b.name}')">🐾 カルテ</button>`:''}
+        <button class="tbtn" onclick="showInvoice('estimate','${b.name}','${b.svc.split('（')[0]}','${b.pet}')">📄 見積もり</button>
+        <button class="tbtn" onclick="showInvoice('invoice','${b.name}','${b.svc.split('（')[0]}','${b.pet}')">🧾 請求書</button>
+        ${b.status==='new'?`<button class="tbtn tbtn-primary" onclick="confirmBk(${b.id})">✓ 確定</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function setBkS(k){bkS=k;renderBk();}
+function confirmBk(id){const b=BOOKINGS.find(x=>x.id===id);if(b){b.status='confirmed';renderBk();}}
+function openKarteByOwner(n){const k=KARTES.find(x=>x.owner===n);if(k)openKarte(k.id);}
+function openAddBooking(){
+  const sh=document.getElementById('add-booking-sheet');
+  sh.classList.add('open');
+  // Always reset on open
+  document.getElementById('ab-step1').style.display='block';
+  document.getElementById('ab-step2').style.display='none';
+  document.getElementById('ab-name').value='';
+  document.getElementById('ab-karte-found').style.display='none';
+  document.getElementById('ab-suggest').style.display='none';
+  const sel=document.getElementById('ab-sitter');
+  sel.innerHTML='<option value="">選択してください</option>'+SITTERS.map(s=>`<option value="${s.id}">${s.emoji} ${s.name}</option>`).join('');
+  if(cur!=='team') sel.value=cur;
+  setTimeout(()=>sh.scrollIntoView({behavior:'smooth',block:'start'}),50);
+}
+function closeAddBooking(){
+  const sh=document.getElementById('add-booking-sheet');
+  sh.classList.remove('open');
+  document.getElementById('ab-step1').style.display='block';
+  document.getElementById('ab-step2').style.display='none';
+  document.getElementById('ab-name').value='';
+  document.getElementById('ab-karte-found').style.display='none';
+  document.getElementById('ab-suggest').style.display='none';
+}
+function onAbNameInput(){
+  const v=document.getElementById('ab-name').value.trim();
+  const sg=document.getElementById('ab-suggest');
+  if(!v){sg.style.display='none';return;}
+  const m=KARTES.filter(k=>k.owner.includes(v));
+  if(!m.length){sg.style.display='none';return;}
+  sg.style.display='block';
+  sg.innerHTML=m.map(k=>`<div onclick="selectSuggest('${k.owner}')" style="padding:9px 11px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);">${k.emoji} ${k.owner} <span style="font-size:11px;color:var(--text-s);">${k.name}</span></div>`).join('');
+}
+function selectSuggest(n){document.getElementById('ab-name').value=n;document.getElementById('ab-suggest').style.display='none';document.getElementById('ab-karte-found').style.display='block';}
+function proceedToDetail(){
+  const sid=document.getElementById('ab-sitter').value;
+  if(!sid){alert('担当シッターを選択してください');return;}
+  const name=document.getElementById('ab-name').value.trim();
+  if(!name){alert('お客様名を入力してください');return;}
+  document.getElementById('ab-step1').style.display='none';
+  document.getElementById('ab-step2').style.display='block';
+  document.getElementById('ab-name-display').textContent=name;
+  document.getElementById('ab-date').valueAsDate=new Date();
+  const k=KARTES.find(x=>x.owner===name);
+  if(k) document.getElementById('ab-petname').value=k.name;
+}
+function backToStep1(){document.getElementById('ab-step1').style.display='block';document.getElementById('ab-step2').style.display='none';}
+function saveAddBooking(withKarte){
+  const name=document.getElementById('ab-name').value.trim();
+  const sid=document.getElementById('ab-sitter').value;
+  if(!sid){alert('担当シッターを選択してください');return;}
+  if(!name){alert('お客様名は必須です');return;}
+  const svc=document.getElementById('ab-svc').value;
+  const date=document.getElementById('ab-date').value;
+  if(!date){alert('日付は必須です');return;}
+  const st=document.getElementById('ab-stime').value;
+  const et=document.getElementById('ab-etime').value;
+  const amt=parseInt(document.getElementById('ab-amt').value)||0;
+  const pet=document.getElementById('ab-petname').value;
+  // Double-submit guard
+  const btn=event&&event.currentTarget;
+  if(btn&&btn._submitting)return;
+  if(btn)btn._submitting=true;
+  BOOKINGS.push({id:BOOKINGS.length+1,sitter:sid,name,pet:pet||'—',svc,date:date.replace(/-/g,'/'),time:`${st}〜${et}`,amt,status:'new'});
+  closeAddBooking();renderBk();
+  document.getElementById('ab-karte-found').style.display='none';
+  if(btn)btn._submitting=false;
+}
+
+// KARTE
+function setKtF(id){ktF=id;tabs('kt-tabs','ktF','全シッター','setKtF');renderKt();}
+function renderKt(){
+  let kl=KARTES;
+  if(ktF!=='team') kl=kl.filter(k=>k.sitter===ktF);
+  const om={};
+  kl.forEach(k=>{if(!om[k.owner])om[k.owner]={pets:[],sitter:k.sitter};om[k.owner].pets.push(k);});
+  const owners=Object.keys(om);
+  const lbl=document.getElementById('kt-summary');
+  if(lbl) lbl.textContent=`お客様: ${owners.length}名 ／ 登録ペット: ${kl.length}頭`;
+  const el=document.getElementById('karte-list');
+  el.innerHTML=owners.map(ownerName=>{
+    const {pets,sitter:sid}=om[ownerName]; const s=gs(sid); const fk=pets[0];
+    const hasMed=pets.some(p=>p.med&&p.med!=='なし');
+    return `<div class="customer-card">
+      <div class="cc-header" onclick="toggleCC(this)">
+        <div class="cc-av">${fk.emoji}</div>
+        <div><div class="cc-name">${ownerName}</div><div class="cc-meta">${pets.map(p=>p.name+'（'+p.breed+'）').join('・')}${hasMed?' ⚠️':''}</div></div>
+        ${s&&ktF==='team'?`<span style="margin-left:auto;display:inline-flex;align-items:center;gap:4px;font-size:10px;background:${s.colorL};color:${s.color};border-radius:12px;padding:2px 8px;font-weight:700;">${s.emoji} ${s.name}</span>`:''}
+        <div style="margin-left:${ktF==='team'?'6px':'auto'};color:var(--text-s);font-size:18px;">›</div>
+      </div>
+      <div class="cc-body">
+        <div class="pet-chips">${pets.map(p=>`<div class="pet-chip" onclick="openKarte(${p.id})">${p.emoji} ${p.name}</div>`).join('')}</div>
+        ${hasMed?`<div class="med-warn">⚠️ 投薬あり — ${pets.filter(p=>p.med&&p.med!=='なし').map(p=>p.name).join('・')}</div>`:''}
+        <div style="display:flex;gap:6px;">
+          <button class="tbtn" onclick="openKarte(${pets[0].id})">🐾 カルテ詳細</button>
+          <button class="tbtn" onclick="showInvoice('estimate','${ownerName}','','')">📄 見積もり</button>
+          <button class="tbtn" onclick="showInvoice('invoice','${ownerName}','','')">🧾 請求書</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function toggleCC(el){el.nextElementSibling.classList.toggle('open');}
+function openKarte(id){
+  const k=KARTES.find(x=>x.id===id); if(!k)return;
+  const hasMed=k.med&&k.med!=='なし';
+  document.getElementById('karte-modal').innerHTML=`
+    <div class="kd-header">
+      <div class="kd-av" style="background:${k.bg};">${k.emoji}</div>
+      <div><div class="kd-name">${k.name}</div><div class="kd-owner">飼い主: ${k.owner}　${k.ownerPhone}</div></div>
+      <button type="button" type="button" class="kd-close" onclick="closeKarte()" aria-label="閉じる" style="min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;">×</button>
+    </div>
+    <div class="kd-body">
+      <div class="kd-sec"><div class="kd-sec-title">基本情報</div>
+        <div class="kd-grid">
+          <div class="kd-field"><div class="kd-field-lbl">種類</div><div class="kd-field-val">${k.breed}</div></div>
+          <div class="kd-field"><div class="kd-field-lbl">年齢 ／ 性別</div><div class="kd-field-val">${k.age} ／ ${k.sex}</div></div>
+          <div class="kd-field"><div class="kd-field-lbl">体重</div><div class="kd-field-val">${k.weight}</div></div>
+          <div class="kd-field"><div class="kd-field-lbl">かかりつけ医</div><div class="kd-field-val">${k.vet}</div></div>
+          <div class="kd-field"><div class="kd-field-lbl">エアコン</div><div class="kd-field-val">${k.ac}</div></div>
+          <div class="kd-field"><div class="kd-field-lbl">アレルギー</div><div class="kd-field-val">${k.allergy}</div></div>
+        </div>
+      </div>
+      ${hasMed?`<div class="kd-med-alert">⚠️ <div><strong>投薬あり</strong><br>${k.med}</div></div>`:''}
+      <div class="kd-sec"><div class="kd-sec-title">フード・給餌</div><div class="kd-note">${k.food}</div></div>
+      <div class="kd-sec"><div class="kd-sec-title">特記事項</div><div class="kd-note">${k.note}</div></div>
+      <div class="kd-sec"><div class="kd-sec-title">当日のケアチェック</div>
+        <div class="care-check">${k.care.map(c=>`<div class="care-item"><div class="care-check-box" onclick="this.classList.toggle('checked')">✓</div><span>${c}</span></div>`).join('')}</div>
+      </div>
+      <div class="kd-sec"><div class="kd-sec-title">対応履歴</div>
+        <div class="kd-history">${k.history.map(h=>`<div class="kd-hist-item"><span class="kd-hist-date">${h.date}</span><span>${h.content}</span></div>`).join('')}</div>
+      </div>
+    </div>`;
+  document.getElementById('karte-detail').classList.add('open');document.body.style.overflow='hidden';
+}
+function closeKarte(){document.getElementById('karte-detail').classList.remove('open');document.body.style.overflow='';}
+
+// SALES
+function setSlF(id){slF=id;tabs('sl-tabs','slF','チーム合算','setSlF');renderSl();}
+function renderSl(){
+  const el=document.getElementById('sales-content');
+  if(slF==='team'){
+    const totals=MJ.map((_,i)=>SITTERS.reduce((s,x)=>s+SALES[x.id].monthly[i],0));
+    const maxBar=Math.max(...totals); const tc=totals[5];
+    const svcT={};SITTERS.forEach(s=>Object.entries(SALES[s.id].services).forEach(([k,v])=>{svcT[k]=(svcT[k]||0)+v;}));
+    el.innerHTML=`
+      <div class="metrics">
+        <div class="metric"><div class="metric-lbl">今月の総売上</div><div class="metric-val" style="color:var(--green);">¥${tc.toLocaleString()}</div><div class="metric-sub"><span class="up">↑ 11%</span> 先月比</div></div>
+        <div class="metric"><div class="metric-lbl">今月の総依頼</div><div class="metric-val">${BOOKINGS.length}件</div><div class="metric-sub">平均 ¥${Math.round(tc/BOOKINGS.length).toLocaleString()} / 件</div></div>
+        <div class="metric"><div class="metric-lbl">累計（今年）</div><div class="metric-val">¥${Math.round(totals.reduce((a,b)=>a+b,0)/10000)}万</div><div class="metric-sub">5名合計</div></div>
+        <div class="metric"><div class="metric-lbl">平均リピート率</div><div class="metric-val">76%</div><div class="metric-sub"><span class="up">↑ 4%</span></div></div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-head"><div class="card-title">📊 チーム月別売上（積み上げ）</div></div>
+          <div class="bar-chart" style="height:150px;padding-top:0;align-items:flex-end;gap:10px;">${totals.map((total,mi)=>{
+            const maxH=120;
+            const totalH=Math.max(4,Math.round((total/maxBar)*maxH));
+            const a=mi===5;
+            // build segments bottom to top
+            let segsHtml='';
+            SITTERS.forEach(s=>{
+              const segH=Math.max(total>0?1:0,Math.round((SALES[s.id].monthly[mi]/total)*totalH));
+              segsHtml=`<div style="width:100%;height:${segH}px;background:${s.color};flex-shrink:0;"></div>`+segsHtml;
+            });
+            const valK=(total/1000).toFixed(0)+'K';
+            return `<div class="bar-wrap" style="position:relative;flex:none;width:28px;">
+              <div style="font-size:9px;color:var(--text-s);text-align:center;margin-bottom:2px;">${valK}</div>
+              <div style="width:100%;height:${totalH}px;display:flex;flex-direction:column;overflow:hidden;border-radius:4px 4px 0 0;">${segsHtml}</div>
+              <div class="bar-lbl" style="font-size:9px;${a?'color:var(--green);font-weight:700;':''}">${MJ[mi]}</div>
+            </div>`;
+          }).join('')}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;">${SITTERS.map(s=>`<div style="display:flex;align-items:center;gap:3px;font-size:11px;"><div style="width:9px;height:9px;border-radius:2px;background:${s.color};"></div>${s.name}</div>`).join('')}</div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">👥 シッター別今月売上</div></div>
+          ${SITTERS.map(s=>{const v=SALES[s.id].monthly[5];const pct=Math.round(v/tc*100);return `<div class="prog-row"><div class="prog-head"><span style="display:flex;align-items:center;gap:5px;">${s.emoji} ${s.name}</span><span style="font-weight:700;color:${s.color};">¥${(v/1000).toFixed(0)}K（${pct}%）</span></div><div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:${s.color};"></div></div></div>`;}).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">📋 サービス別内訳（チーム合算）</div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">${Object.entries(svcT).map(([svc,amt])=>{const pct=Math.round(amt/tc*100);return `<div class="prog-row" style="margin-bottom:0;"><div class="prog-head"><span>${svc}</span><span style="font-weight:700;">¥${(amt/1000).toFixed(0)}K（${pct}%）</span></div><div class="prog-bar"><div class="prog-fill" style="width:${pct}%;"></div></div></div>`;}).join('')}</div>
+      </div>`;
+  } else {
+    const s=gs(slF); const d=SALES[slF]; const cv=d.monthly[5]; const maxBar=Math.max(...d.monthly);
+    const myB=BOOKINGS.filter(b=>b.sitter===slF); const svcT=Object.values(d.services).reduce((a,b)=>a+b,0);
+    el.innerHTML=`
+      <div class="sitter-banner">
+        <div class="sitter-banner-av" style="background:${s.colorL};">${s.emoji}</div>
+        <div><div style="font-size:15px;font-weight:700;">${s.name}の売上・収益</div><div style="font-size:11px;color:var(--text-s);">${s.specialty}</div></div>
+      </div>
+      <div class="metrics">
+        <div class="metric"><div class="metric-lbl">今月の売上</div><div class="metric-val" style="color:${s.color};">¥${cv.toLocaleString()}</div><div class="metric-sub"><span class="up">↑ 12%</span> 先月比</div></div>
+        <div class="metric"><div class="metric-lbl">今月の依頼</div><div class="metric-val">${myB.length}件</div><div class="metric-sub">平均 ¥${myB.length?Math.round(cv/myB.length).toLocaleString():'—'} / 件</div></div>
+        <div class="metric"><div class="metric-lbl">累計（今年）</div><div class="metric-val">¥${Math.round(d.monthly.reduce((a,b)=>a+b,0)/10000)}万</div></div>
+        <div class="metric"><div class="metric-lbl">リピート率</div><div class="metric-val">${74+SITTERS.findIndex(x=>x.id===slF)*2}%</div><div class="metric-sub"><span class="up">↑ 5%</span></div></div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-head"><div class="card-title">📊 月別売上</div></div>
+          <div class="bar-chart">${d.monthly.map((v,i)=>{const h=Math.max(4,Math.round((v/maxBar)*100));const a=i===5;return `<div class="bar-wrap"><div class="bar" style="height:${h}px;background:${a?s.color:s.colorL};"><span class="bar-v">${(v/1000).toFixed(0)}K</span></div><div class="bar-lbl" style="${a?`color:${s.color};font-weight:700;`:''}">${MJ[i]}</div></div>`;}).join('')}</div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">📋 サービス別内訳</div></div>
+          ${Object.entries(d.services).map(([svc,amt])=>{const pct=Math.round(amt/svcT*100);return `<div class="prog-row"><div class="prog-head"><span>${svc}</span><span style="font-weight:700;">¥${(amt/1000).toFixed(0)}K（${pct}%）</span></div><div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:${s.color};"></div></div></div>`;}).join('')}
+        </div>
+      </div>`;
+  }
+}
+
+// REVIEWS
+function setRvF(id){rvF=id;tabs('rv-tabs','rvF','全シッター','setRvF');renderRv();}
+function renderRv(){
+  const el=document.getElementById('reviews-content');
+  const entries=rvF==='team'?SITTERS.flatMap(s=>REVIEWS[s.id].map(r=>({...r,sitter:s.id}))):(REVIEWS[rvF]||[]).map(r=>({...r,sitter:rvF}));
+  const avgR=rvF==='team'?(SITTERS.reduce((s,x)=>s+x.rating,0)/SITTERS.length).toFixed(1):gs(rvF).rating;
+  el.innerHTML=`
+    <div class="two-col">
+      <div class="card">
+        <div class="card-head"><div class="card-title">⭐ ${rvF==='team'?'チーム平均評価':'評価'}</div></div>
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div style="text-align:center;"><div style="font-size:44px;font-weight:700;line-height:1;">${avgR}</div><div style="color:#F0A500;">★★★★★</div><div style="font-size:11px;color:var(--text-s);">${entries.length}件</div></div>
+        </div>
+        ${rvF==='team'?`<div style="margin-top:12px;">${SITTERS.map(s=>`<div style="display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--border);">
+          <span>${s.emoji} ${s.name}</span>
+          <div style="flex:1;background:var(--sand-d);border-radius:3px;height:6px;overflow:hidden;margin:0 6px;"><div style="width:${Math.round((s.rating/5)*100)}%;height:100%;background:#F0A500;border-radius:3px;"></div></div>
+          <span style="font-size:13px;font-weight:700;">${s.rating}</span>
+        </div>`).join('')}</div>`:''}
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">📝 クチコミ</div></div>
+        ${entries.map(r=>{const s=gs(r.sitter);return `<div class="review-item">
+          <div class="review-head"><div class="review-name">${r.name}</div><span style="color:#F0A500;">${'★'.repeat(r.stars)}</span><div class="review-date">${r.date}</div></div>
+          ${rvF==='team'&&s?`<div style="font-size:10px;background:${s.colorL};color:${s.color};display:inline-block;padding:1px 7px;border-radius:10px;margin-bottom:3px;font-weight:700;">${s.emoji} ${s.name}</div>`:''}
+          <div class="review-text">${r.text}</div>
+          <button class="ai-btn" onclick="genRvReply(this,'${r.name.replace(/'/g,"\\'")}','${r.text.replace(/'/g,"\\'")}')">✨ AI返信文を生成</button>
+        </div>`;}).join('')}
+      </div>
+    </div>`;
+}
+
+// SETTINGS
+function setStF(id){stF=id;tabs('st-tabs','stF','','setStF',false);renderSt();}
+function renderSt(){
+  const el=document.getElementById('settings-content');
+  const s=gs(stF); if(!s){el.innerHTML='';return;}
+  el.innerHTML=`
+    <div class="two-col">
+      <div class="card">
+        <div class="card-head"><div class="card-title">👤 基本情報（${s.name}）</div></div>
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:14px;">
+          <div style="width:56px;height:56px;border-radius:50%;background:${s.colorL};display:flex;align-items:center;justify-content:center;font-size:28px;">${s.emoji}</div>
+          <div><div style="font-size:16px;font-weight:700;">${s.name}</div><div style="font-size:12px;color:var(--text-s);">${s.specialty}</div></div>
+        </div>
+        <div class="setting-row"><div><div class="setting-lbl">対応エリア</div></div><div class="setting-val">${s.area}</div><button class="edit-btn">編集</button></div>
+        <div class="setting-row"><div><div class="setting-lbl">連絡先</div></div><div class="setting-val">${s.email}</div><button class="edit-btn">編集</button></div>
+        <div class="setting-row"><div><div class="setting-lbl">評価</div></div><div class="setting-val">⭐ ${s.rating}（${s.reviews}件）</div></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">⚙️ 受付・通知設定</div></div>
+        <div class="setting-row"><div><div class="setting-lbl">新規依頼の受付</div><div class="setting-desc">オフにすると依頼が届かなくなります</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-sl"></span></label></div>
+        <div class="setting-row"><div><div class="setting-lbl">メール通知</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-sl"></span></label></div>
+        <div class="setting-row"><div><div class="setting-lbl">AI返信アシスト</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-sl"></span></label></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title">💰 料金設定（${s.name}）</div></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:11px;">
+        <div><div style="font-size:12px;color:var(--text-s);margin-bottom:3px;">お留守番</div><input type="text" value="¥2,000 / 時間" class="form-input"/></div>
+        <div><div style="font-size:12px;color:var(--text-s);margin-bottom:3px;">お散歩（30分）</div><input type="text" value="¥1,500" class="form-input"/></div>
+        <div><div style="font-size:12px;color:var(--text-s);margin-bottom:3px;">お泊まり（1泊）</div><input type="text" value="¥8,000" class="form-input"/></div>
+      </div>
+      <button class="tbtn tbtn-primary" style="margin-top:11px;">変更を保存する</button>
+    </div>`;
+}
+
+// LINE
+const LINE_SC=[
+  {label:'空き確認',msg:'来週の月曜日は空いていますか？'},
+  {label:'料金確認',msg:'お留守番の料金はいくらですか？'},
+  {label:'投薬対応',msg:'薬を1日1回飲ませる必要があるのですが大丈夫ですか？'},
+  {label:'写真報告希望',msg:'お世話中の写真を送ってもらえますか？'},
+  {label:'キャンセル',msg:'急なんですが予約をキャンセルできますか？'},
+];
+function renderLineSC(){
+  document.getElementById('line-scenarios').innerHTML=LINE_SC.map(sc=>`<button class="line-sc-btn" onclick="selLineSC(this,this.dataset.msg)" data-msg="${sc.msg.replace(/"/g,'&quot;')}">${sc.label}</button>`).join('');
+}
+function selLineSC(btn,msg){
+  document.querySelectorAll('.line-sc-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('line-input').value=msg;
+  document.getElementById('line-recv-bubble').textContent=msg;
+}
+async function genLineReply(){
+  var msg=document.getElementById('line-input').value.trim(); if(!msg)return;
+  document.getElementById('line-recv-bubble').textContent=msg;
+  var btn=document.querySelector('.line-gen-btn');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> 生成中...';
+  var area=document.getElementById('line-output-area'); area.innerHTML='';
+  var text='';
+  try{
+    var resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',max_tokens:500,
+        messages:[{role:'user',content:'プロのペットシッターとしてLINEメッセージへの返信文を150文字以内で。お客様:「'+msg+'」返信文のみ出力。'}]
+      })
+    });
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    var data=await resp.json();
+    text=((data.content||[]).map(function(c){return c.text||'';}).join('')).trim();
+    if(!text) throw new Error('empty');
+  }catch(e){
+    text='ありがとうございます！ご連絡いただき、ありがとうございます。詳細について確認し、改めてご連絡いたします🐾';
+  }
+  area.innerHTML='<div class="line-result-box">'+text+'</div><button class="line-copy-btn" onclick="copyToClipboard(this.previousElementSibling.textContent)">📋 コピー</button>';
+  var chat=document.getElementById('line-chat');
+  if(chat) chat.innerHTML+='<div class="line-msg line-msg-sent"><div class="line-bubble">'+(text.length>80?text.substring(0,80)+'…':text)+'</div></div>';
+  btn.disabled=false; btn.innerHTML='✨ 返信文を生成する';
+}
+
+// INVOICE
+const RATES={'お留守番':2000,'お散歩':1500,'お泊まり':8000,'病院付き添い':3000,'シニアケア':2500};
+function showInvoice(type,customerName,svc,pet){
+  const custK=KARTES.filter(k=>k.owner===customerName);
+  const svcName=svc||'お留守番';
+  const petName=pet||(custK.map(p=>p.name).join('・'))||'—';
+  const basePrice=(RATES[svcName]||2000)*4;
+  const medPets=custK.filter(p=>p.med&&p.med!=='なし');
+  const medFee=medPets.length*500;
+  const subtotal=basePrice+medFee+1000;
+  const tax=Math.round(subtotal*.1);
+  const total=subtotal+tax;
+  const isEst=type==='estimate';
+  const today=new Date();
+  const dateStr=`${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`;
+  const docNum=(isEst?'MR-2025-':'INV-2025-')+(Math.floor(Math.random()*900)+100);
+  const bk=BOOKINGS.find(b=>b.name===customerName);
+  const s=bk?gs(bk.sitter):gs('saori');
+  document.getElementById('inv-modal-title').textContent=isEst?'見積もり書':'請求書';
+  document.getElementById('inv-doc-content').innerHTML=`
+    <div class="inv-doc">
+      <div class="inv-doc-header">
+        <div>
+          <div class="inv-doc-logo">🐾 ${s?s.name+'のペットシッター':'PET MERIT'}</div>
+          <div class="inv-doc-logo-sub">${s?s.area:'—'}</div>
+          <div class="inv-doc-logo-sub" style="margin-top:2px;">担当: ${s?s.name:'—'}　${s?s.email:''}</div>
+        </div>
+        <div>
+          <div class="inv-doc-type">${isEst?'見 積 も り 書':'請 求 書'}</div>
+          <div class="inv-doc-num">No. ${docNum}</div>
+          <div class="inv-doc-num">発行日: ${dateStr}</div>
+        </div>
+      </div>
+      <div class="inv-doc-parties">
+        <div><div class="inv-party-lbl">請求先</div><div class="inv-party-name">${customerName} 様</div><div class="inv-party-detail">ペット: ${petName}</div></div>
+        <div><div class="inv-party-lbl">${isEst?'有効期限':'サービス'}</div><div class="inv-party-name" style="font-size:13px;">${isEst?'発行日より30日間':svcName}</div></div>
+      </div>
+      <table class="inv-table">
+        <thead><tr><th>内容</th><th style="text-align:center;">数量</th><th style="text-align:right;">金額</th></tr></thead>
+        <tbody>
+          <tr><td>${svcName}</td><td style="text-align:center;">1式</td><td style="text-align:right;">¥${basePrice.toLocaleString()}</td></tr>
+          ${medFee?`<tr><td>投薬対応オプション</td><td style="text-align:center;">${medPets.length}頭</td><td style="text-align:right;">¥${medFee.toLocaleString()}</td></tr>`:''}
+          <tr><td>鍵預かり料</td><td style="text-align:center;">1式</td><td style="text-align:right;">¥1,000</td></tr>
+        </tbody>
+      </table>
+      <div class="inv-totals">
+        <div class="inv-total-row"><span>小計</span><span>¥${subtotal.toLocaleString()}</span></div>
+        <div class="inv-total-row"><span>消費税（10%）</span><span>¥${tax.toLocaleString()}</span></div>
+        <div class="inv-total-row"><span>${isEst?'お見積もり合計':'ご請求金額'}</span><span>¥${total.toLocaleString()}</span></div>
+      </div>
+      <div class="inv-note">${isEst?'本見積もりは発行日より30日間有効です。':'【お振込先】〇〇銀行 渋谷支店 普通 1234567　お支払い確認後、領収書をお送りします。'}</div>
+      <div class="inv-footer">🐾 PET MERIT チーム管理システム</div>
+    </div>`;
+  document.getElementById('invoice-modal').classList.add('open');document.body.style.overflow='hidden';
+}
+function closeInvoice(){document.getElementById('invoice-modal').classList.remove('open');document.body.style.overflow='';}
+function printInvoice(){
+  const st=document.createElement('style');st.id='__ips__';
+  st.textContent='@media print{body>*{display:none!important}#invoice-modal{display:block!important;position:static!important;background:none!important;padding:0!important}.invoice-wrap{max-height:none!important}.inv-toolbar{display:none!important}@page{margin:12mm;size:A4}}';
+  document.head.appendChild(st);window.print();setTimeout(()=>st.remove(),2000);
+}
+
+// REVIEW AI
+async function genRvReply(btn,name,review){
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> 生成中...';
+  var text='';
+  try{
+    var resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',max_tokens:300,
+        messages:[{role:'user',content:'ペットシッターとして'+name+'さんのクチコミ「'+review+'」への返信文を100文字程度で。返信文のみ出力。'}]
+      })
+    });
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    var data=await resp.json();
+    text=((data.content||[]).map(function(c){return c.text||'';}).join('')).trim();
+    if(!text) throw new Error('empty');
+  }catch(e){
+    text=name+'様、温かいお言葉ありがとうございます。またのご利用をお待ちしております🐾';
+  }
+  var box=document.createElement('div');
+  box.className='replied-box';
+  box.textContent='返信: '+text;
+  btn.replaceWith(box);
+}
+
+// TEAM CHAT
+const CHAT_ROOMS=[
+  {id:'all',   name:'チーム全体',     emoji:'📢', color:'#2A7C5F', colorL:'#E8F5F0', type:'general', members:['saori','yuki','hana','ren','moe'], unread:0},
+  {id:'urgent',name:'緊急・重要連絡', emoji:'🚨', color:'#E05A7A', colorL:'#FDEEF3', type:'urgent',  members:['saori','yuki','hana','ren','moe'], unread:1},
+  {id:'care',  name:'ケア情報共有',   emoji:'🐾', color:'#C47D1E', colorL:'#FEF3E2', type:'care',    members:['saori','yuki','hana','ren','moe'], unread:0},
+  {id:'shift', name:'シフト調整',     emoji:'📅', color:'#3A7CC7', colorL:'#EBF3FF', type:'schedule',members:['saori','yuki','hana','ren','moe'], unread:2},
+];
+const CHAT_MSGS_MAP={
+  'all':[
+    {id:1,sender:'saori',text:'みなさん、今月もよろしくお願いします！🐾',time:'09:00',date:'6/13',topic:'',reactions:{},replies:[]},
+    {id:2,sender:'yuki', text:'よろしくお願いします！レオくんの散歩、今日も元気でした🐕',time:'09:15',date:'6/13',topic:'ケア',reactions:{},replies:[
+      {id:1,sender:'saori',text:'レオくんいつも元気ですよね！',time:'09:20'},
+      {id:2,sender:'hana', text:'大型犬はエネルギーすごいですよね🙏',time:'09:22'},
+    ]},
+    {id:3,sender:'hana', text:'シロちゃんとクロちゃんのお留守番、無事終わりました🐈',time:'10:30',date:'6/13',topic:'ケア',reactions:{'👍':['yuki','ren']},replies:[]},
+    {id:4,sender:'ren',  text:'マルくんのしつけ、スワレができるようになりました😊',time:'11:05',date:'6/13',topic:'ケア',reactions:{'🎉':['saori','hana','moe']},replies:[
+      {id:1,sender:'moe',  text:'すごい進歩！清水さんも喜ばれそうですね',time:'11:10'},
+    ]},
+    {id:5,sender:'moe',  text:'チョコちゃん（ビーグル）、シニアなので対応の際は無理させないようご注意ください🐶',time:'11:20',date:'6/13',topic:'共有',reactions:{'👀':['saori','yuki','hana','ren']},replies:[]},
+  ],
+  'urgent':[
+    {id:1,sender:'saori',text:'佐藤様のチョコちゃん（チワワ）、投薬忘れ厳禁です！6/18の担当者は必ず確認してください',time:'08:30',date:'6/13',topic:'',reactions:{},replies:[
+      {id:1,sender:'yuki',text:'確認しました。さおりさん担当ですね、よろしくお願いします',time:'08:35'},
+    ]},
+    {id:2,sender:'ren',  text:'清水様のマルくん、今日の散歩中に右前足を少し気にしていました。次回訪問時に確認お願いします',time:'12:00',date:'6/13',topic:'',reactions:{'👀':['saori','hana']},replies:[]},
+  ],
+  'care':[
+    {id:1,sender:'hana', text:'猫のお留守番時のチェックリストを更新しました。トイレ確認・水替え・食事量の記録を必ず行ってください📝',time:'10:00',date:'6/12',topic:'',reactions:{'👍':['saori','yuki','ren','moe']},replies:[]},
+    {id:2,sender:'moe',  text:'シニア犬ケアのポイント：①短時間の散歩 ②サプリ確実に投与 ③異変があればすぐ報告。みなさんも共有しておきます📌',time:'14:00',date:'6/12',topic:'',reactions:{'🐾':['saori','yuki','hana','ren']},replies:[
+      {id:1,sender:'ren', text:'とても参考になります！ありがとうございます',time:'14:10'},
+    ]},
+  ],
+  'shift':[
+    {id:1,sender:'saori',text:'6/20（金）の午後、誰か対応できる方いますか？中村様のお泊まりが始まりで立会いお願いしたいです',time:'15:00',date:'6/12',topic:'',reactions:{},replies:[
+      {id:1,sender:'yuki',text:'私が担当しています！問題ないです',time:'15:05'},
+      {id:2,sender:'saori',text:'ありがとうございます！よろしくお願いします🙏',time:'15:07'},
+    ]},
+    {id:2,sender:'ren',  text:'来週月曜の豊島区エリアで対応できる方、確認させてください。私は午前のみ可能です',time:'09:00',date:'6/13',topic:'',reactions:{},replies:[]},
+    {id:3,sender:'hana', text:'月曜午後の港区・品川区は私が対応可能です！',time:'09:15',date:'6/13',topic:'',reactions:{},replies:[]},
+  ],
+};
+let activeChatRoom='all';
+let activeThread=null;
+let newChatType='general';
+const CHAT_ME='saori';
+const REACTIONS_LIST=['👍','🎉','🐾','💪','👀','😊'];
+
+function initChat(){
+  renderChatRoomList();
+  openChatRoom('all');
+}
+function renderChatRoomList(){
+  const el=document.getElementById('chat-room-list'); if(!el)return;
+  el.innerHTML=CHAT_ROOMS.map(r=>{
+    const msgs=CHAT_MSGS_MAP[r.id]||[];
+    const last=msgs[msgs.length-1];
+    const lastText=last?(last.sender===CHAT_ME?'自分: ':'')+last.text:'メッセージなし';
+    const lastTime=last?last.time:'';
+    const active=activeChatRoom===r.id;
+    return `<div class="chat-room-item${active?' active':''}" onclick="openChatRoom('${r.id}')">
+      <div class="chat-room-av" style="background:${r.colorL};">${r.emoji}
+        <div class="chat-room-av-badge" style="background:${r.color};"></div>
+      </div>
+      <div class="chat-room-info">
+        <div class="chat-room-name">${r.name}</div>
+        <div class="chat-room-preview">${lastText}</div>
+      </div>
+      <div class="chat-room-meta">
+        <div class="chat-room-time">${lastTime}</div>
+        ${r.unread&&!active?`<div class="chat-unread">${r.unread}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function openChatRoom(id){
+  activeChatRoom=id;
+  const r=CHAT_ROOMS.find(x=>x.id===id); if(!r)return;
+  r.unread=0;
+  renderChatRoomList();
+  // header
+  const h=document.getElementById('chat-header');
+  const chips=r.members.map(sid=>{const s=gs(sid);return s?`<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;background:${s.colorL};color:${s.color};border-radius:10px;padding:1px 7px;font-weight:700;">${s.emoji}${s.name}</span>`:''}).join('');
+  h.innerHTML=`<div class="chat-header-av" style="background:${r.colorL};">${r.emoji}</div>
+    <div><div class="chat-header-name">${r.name}</div><div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap;">${chips}</div></div>
+    <div style="margin-left:auto;"><select id="chat-topic-filter" style="font-size:16px;padding:4px 8px;border-radius:12px;border:1px solid var(--border);font-family:inherit;color:var(--text-m);" onchange="filterChatByTopic(this.value)"><option value="">すべて</option><option value="予約">📋 予約</option><option value="ケア">🐾 ケア</option><option value="シフト">📅 シフト</option><option value="共有">📌 共有</option></select></div>`;
+  renderChatMsgs();
+  document.getElementById('chat-input-bar').style.display='flex';
+  closeThread();
+  document.getElementById('chat-ai-suggest').textContent='';
+}
+function filterChatByTopic(val){renderChatMsgs(val);}
+function renderChatMsgs(filter){
+  filter=filter||'';
+  const el=document.getElementById('chat-messages'); if(!el)return;
+  let msgs=(CHAT_MSGS_MAP[activeChatRoom]||[]);
+  if(filter) msgs=msgs.filter(m=>m.topic===filter);
+  let lastDate='',html='';
+  msgs.forEach(m=>{
+    const s=gs(m.sender); const isMe=m.sender===CHAT_ME;
+    if(m.date!==lastDate){html+=`<div class="chat-date-sep">${m.date}</div>`;lastDate=m.date;}
+    const topicHtml=m.topic?`<span class="topic-tag topic-${m.topic}">${m.topic}</span>`:'';
+    const rxHtml=Object.entries(m.reactions).map(([emoji,users])=>{
+      const reacted=users.includes(CHAT_ME);
+      return `<button class="reaction${reacted?' reacted':''}" onclick="toggleReaction(${m.id},'${emoji}')">${emoji} ${users.length}</button>`;
+    }).join('');
+    const rxBar=`<div class="reaction-bar">${rxHtml}<button class="reaction" onclick="addReaction(${m.id})">＋</button></div>`;
+    const replyCount=m.replies.length;
+    const replyBtn=`<button class="thread-btn" onclick="openThread(${m.id})">💬 ${replyCount>0?replyCount+'件の返信':'返信'}</button>`;
+    if(isMe){
+      html+=`<div class="chat-msg-row mine">
+        <div>
+          <div style="display:flex;align-items:flex-end;gap:5px;flex-direction:row-reverse;">
+            <div class="chat-bubble">${topicHtml}${m.text}</div>
+            <div class="chat-msg-time">${m.time}</div>
+          </div>
+          ${rxBar}<div style="text-align:right;">${replyBtn}</div>
+        </div>
+      </div>`;
+    } else {
+      html+=`<div class="chat-msg-row">
+        <div class="chat-msg-av" style="background:${s?s.colorL:'var(--sand)'};">${s?s.emoji:'?'}</div>
+        <div>
+          <div class="chat-msg-sender">${s?s.name:'不明'}</div>
+          <div style="display:flex;align-items:flex-end;gap:5px;">
+            <div class="chat-bubble">${topicHtml}${m.text}</div>
+            <div class="chat-msg-time">${m.time}</div>
+          </div>
+          ${rxBar}${replyBtn}
+        </div>
+      </div>`;
+    }
+  });
+  el.innerHTML=html||'<div style="text-align:center;color:var(--text-s);font-size:13px;padding:40px;">まだメッセージがありません</div>';
+  el.scrollTop=el.scrollHeight;
+}
+function sendChatMsg(){
+  const input=document.getElementById('chat-input');
+  const text=input.value.trim(); if(!text)return;
+  // Prevent double send
+  const sendBtn=document.querySelector('#chat-input-bar .chat-send-btn');
+  if(sendBtn&&sendBtn._sending)return;
+  if(sendBtn)sendBtn._sending=true;
+  setTimeout(()=>{if(sendBtn)sendBtn._sending=false;},500);
+  const topic=document.getElementById('chat-topic-select')?.value||'';
+  const now=new Date();
+  const time=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const msgs=CHAT_MSGS_MAP[activeChatRoom];
+  msgs.push({id:msgs.length+1,sender:CHAT_ME,text,time,date:'6/13',topic,reactions:{},replies:[]});
+  input.value='';
+  document.getElementById('chat-ai-suggest').textContent='';
+  renderChatMsgs();
+  renderChatRoomList();
+}
+function openThread(msgId){
+  activeThread=msgId;
+  const msgs=CHAT_MSGS_MAP[activeChatRoom]||[];
+  const m=msgs.find(x=>x.id===msgId); if(!m)return;
+  const s=gs(m.sender);
+  const panel=document.getElementById('thread-panel');
+  panel.classList.remove('closed');
+  const topicHtml=m.topic?`<span class="topic-tag topic-${m.topic}">${m.topic}</span>`:'';
+  document.getElementById('thread-parent-msg').innerHTML=`<div style="font-size:10px;font-weight:700;color:var(--text-m);margin-bottom:4px;">${s?s.emoji+s.name:'?'}　<span style="color:var(--text-s);">${m.time}</span></div>${topicHtml}${m.text}`;
+  renderThreadReplies(m);
+}
+function closeThread(){
+  document.getElementById('thread-panel').classList.add('closed');
+  activeThread=null;
+}
+function renderThreadReplies(m){
+  const el=document.getElementById('thread-replies');
+  if(!m.replies.length){el.innerHTML='<div style="color:var(--text-s);font-size:12px;padding:10px;">まだ返信はありません</div>';return;}
+  el.innerHTML=m.replies.map(r=>{
+    const s=gs(r.sender);
+    return `<div class="thread-reply">
+      <div class="thread-reply-av" style="background:${s?s.colorL:'var(--sand)'};">${s?s.emoji:'?'}</div>
+      <div class="thread-reply-bubble">
+        <div class="thread-reply-sender">${s?s.name:'?'}　<span style="color:var(--text-s);font-weight:400;">${r.time}</span></div>
+        ${r.text}
+      </div>
+    </div>`;
+  }).join('');
+  el.scrollTop=el.scrollHeight;
+}
+function sendThreadReply(){
+  if(!activeThread)return;
+  const input=document.getElementById('thread-input');
+  const text=input.value.trim(); if(!text)return;
+  const btn=document.querySelector('.thread-input-bar .chat-send-btn');
+  if(btn&&btn._sending)return;
+  if(btn)btn._sending=true;
+  setTimeout(()=>{if(btn)btn._sending=false;},500);
+  const msgs=CHAT_MSGS_MAP[activeChatRoom]||[];
+  const m=msgs.find(x=>x.id===activeThread); if(!m)return;
+  const now=new Date();
+  const time=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  m.replies.push({id:m.replies.length+1,sender:CHAT_ME,text,time});
+  input.value='';
+  renderThreadReplies(m);
+  renderChatMsgs();
+}
+function toggleReaction(msgId,emoji){
+  const msgs=CHAT_MSGS_MAP[activeChatRoom]||[];
+  const m=msgs.find(x=>x.id===msgId); if(!m)return;
+  if(!m.reactions[emoji]) m.reactions[emoji]=[];
+  const idx=m.reactions[emoji].indexOf(CHAT_ME);
+  if(idx>=0) m.reactions[emoji].splice(idx,1); else m.reactions[emoji].push(CHAT_ME);
+  if(m.reactions[emoji].length===0) delete m.reactions[emoji];
+  renderChatMsgs();
+}
+function addReaction(msgId){
+  toggleReaction(msgId,REACTIONS_LIST[Math.floor(Math.random()*REACTIONS_LIST.length)]);
+}
+// 新規チャット作成
+function openNewChatModal(){
+  const el=document.getElementById('new-chat-modal'); if(el)el.style.display='flex';
+  document.body.style.overflow='hidden';
+  const mem=document.getElementById('new-chat-members'); if(!mem)return;
+  mem.innerHTML=SITTERS.map(s=>`<button class="tbtn active" id="nm-${s.id}" onclick="toggleChatMember('${s.id}',this)" style="font-size:11px;padding:4px 10px;">${s.emoji} ${s.name}</button>`).join('');
+}
+function closeNewChatModal(){const el=document.getElementById('new-chat-modal');if(el){el.style.display='none';}document.body.style.overflow='';}
+function selChatType(btn,type){
+  newChatType=type;
+  document.querySelectorAll('#new-chat-type-btns .tbtn').forEach(b=>b.classList.remove('active','tbtn-primary'));
+  btn.classList.add('active');
+}
+function toggleChatMember(id,btn){btn.classList.toggle('active');}
+function createNewChat(){
+  const name=document.getElementById('new-chat-name').value.trim()||'新しいチャット';
+  const typeMap={general:'📢',urgent:'🚨',schedule:'📅',care:'🐾'};
+  const colorMap={general:'#2A7C5F',urgent:'#E05A7A',schedule:'#3A7CC7',care:'#C47D1E'};
+  const colorLMap={general:'#E8F5F0',urgent:'#FDEEF3',schedule:'#EBF3FF',care:'#FEF3E2'};
+  const newId='chat-'+Date.now();
+  const members=SITTERS.map(s=>s.id).filter(sid=>{const btn=document.getElementById('nm-'+sid);return btn&&btn.classList.contains('active');});
+  CHAT_ROOMS.push({id:newId,name,emoji:typeMap[newChatType]||'💬',color:colorMap[newChatType]||'#2A7C5F',colorL:colorLMap[newChatType]||'#E8F5F0',type:newChatType,members,unread:0});
+  CHAT_MSGS_MAP[newId]=[];
+  document.getElementById('new-chat-name').value='';
+  closeNewChatModal();
+  renderChatRoomList();
+  openChatRoom(newId);
+}
+async function chatAISuggest(){
+  var btn=document.querySelector('.chat-ai-btn');
+  if(!btn)return;
+  btn.innerHTML='<span class="spin"></span>';btn.disabled=true;
+  var msgs=CHAT_MSGS_MAP[activeChatRoom]||[];
+  var last=msgs.slice(-3).map(function(m){var s=gs(m.sender);return (s?s.name:'?')+': '+m.text;}).join('\n');
+  var r=CHAT_ROOMS.find(function(x){return x.id===activeChatRoom;});
+  var text='';
+  try{
+    var resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',max_tokens:300,
+        messages:[{role:'user',content:'ペットシッターチームの業務チャット「'+(r?r.name:'')+'」の会話です。さおりさんが送る自然なメッセージを1〜2文で提案。メッセージのみ出力。\n\n直近:\n'+last}]
+      })
+    });
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    var data=await resp.json();
+    text=((data.content||[]).map(function(c){return c.text||'';}).join('')).trim();
+    if(!text) throw new Error('empty');
+  }catch(e){
+    var mocks=['了解しました！確認してご連絡します🐾','ありがとうございます。対応いたします！','承知しました。よろしくお願いします😊'];
+    text=mocks[Math.floor(Math.random()*mocks.length)];
+  }
+  var inp=document.getElementById('chat-input');
+  if(inp) inp.value=text;
+  var sug=document.getElementById('chat-ai-suggest');
+  if(sug) sug.textContent='✓ AI提案済み';
+  btn.innerHTML='✨ AI文章提案';btn.disabled=false;
+}
+
+
+// ── BASE DATE ──
+const BASE_DATE = new Date(2025, 5, 13); // June 13 2025
+
+// ── ESCAPE KEY ──
+document.addEventListener('keydown', function(e){
+  if(e.key !== 'Escape') return;
+  if(document.getElementById('invoice-modal').classList.contains('open')){ closeInvoice(); return; }
+  if(document.getElementById('karte-detail').classList.contains('open')){ closeKarte(); return; }
+  const nm=document.getElementById('new-chat-modal');
+  if(nm&&nm.style.display==='flex'){ closeNewChatModal(); return; }
+  const ab=document.getElementById('add-booking-sheet');
+  if(ab&&ab.classList.contains('open')){ closeAddBooking(); return; }
+  const tp=document.getElementById('thread-panel');
+  if(tp&&tp.style.width&&tp.style.width!=='0'&&tp.style.width!=='0px'){ closeThread(); return; }
+  if(document.getElementById('sidebar').classList.contains('open')){ closeSb(); return; }
+});
+
+// ── CLIPBOARD HELPER (GAS-safe) ──
+function copyToClipboard(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).catch(function() { _fallbackCopy(text); });
+  } else {
+    _fallbackCopy(text);
+  }
+}
+function _fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0;';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
+}
+// INIT
+document.addEventListener('DOMContentLoaded', function() {
+  buildSW();
+  tabs('cal-tabs','calF','全シッター','setCalF');
+  tabs('bk-tabs','bkF','全シッター','setBkF');
+  tabs('kt-tabs','ktF','全シッター','setKtF');
+  tabs('sl-tabs','slF','チーム合算','setSlF');
+  tabs('rv-tabs','rvF','全シッター','setRvF');
+  tabs('st-tabs','stF','','setStF',false);
+  renderDash();
+  renderCal();
+  renderBk();
+  renderKt();
+  renderSl();
+  renderRv();
+  renderSt();
+});
+
+</script>
+</body>
+</html>
