@@ -2,6 +2,10 @@
   "rewrites": [
     { "source": "/management", "destination": "/management.html" },
     { "source": "/management-team", "destination": "/management-team.html" },
-    { "source": "/reserve", "destination": "/reserve.html" }
+    { "source": "/reserve", "destination": "/reserve.html" },
+
+    { "source": "/management_gas", "destination": "/management_gas.html" },
+    { "source": "/management_team_gas", "destination": "/management_team_gas.html" },
+    { "source": "/reserve_gas", "destination": "/reserve_gas.html" }
   ]
 }
