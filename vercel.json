@@ -3,9 +3,11 @@
     { "source": "/management", "destination": "/management.html" },
     { "source": "/management-team", "destination": "/management-team.html" },
     { "source": "/reserve", "destination": "/reserve.html" },
-
     { "source": "/management_gas", "destination": "/management_gas.html" },
     { "source": "/management_team_gas", "destination": "/management_team_gas.html" },
-    { "source": "/reserve_gas", "destination": "/reserve_gas.html" }
+    { "source": "/reserve_gas", "destination": "/reserve_gas.html" },
+    { "source": "/management_v2", "destination": "/management_v2.html" },
+    { "source": "/management_team_v2", "destination": "/management_team_v2.html" },
+    { "source": "/reserve_v2", "destination": "/reserve_v2.html" }
   ]
 }
